@@ -4,6 +4,9 @@ import com.google.gson.*
 import com.hatfat.swccg.json.parse.data.SWCCGCardFace
 import java.lang.reflect.Type
 
+/*
+    Handles deserializing the "hack" elements that could  be Strings or Numbers...
+ */
 class SWCCGCardFaceSerializer : JsonSerializer<SWCCGCardFace> {
     private val gson = Gson()
 
@@ -19,19 +22,6 @@ class SWCCGCardFaceSerializer : JsonSerializer<SWCCGCardFace> {
         jsonObject.addProperty("type", src.type)
         jsonObject.addProperty("subType", src.subType)
         jsonObject.addProperty("uniqueness", src.uniqueness)
-        /*
-        "destiny"
-        "power"
-        "ability"
-        "maneuver"
-        "armor"
-        "hyperspeed"
-        "landspeed"
-        "politics"
-        "deploy"
-        "forfeit"
-        "parsec"
-        */
         addHackElement(jsonObject, "destiny", src.destiny)
         addHackElement(jsonObject, "power", src.power)
         addHackElement(jsonObject, "ability", src.ability)
@@ -42,7 +32,6 @@ class SWCCGCardFaceSerializer : JsonSerializer<SWCCGCardFace> {
         addHackElement(jsonObject, "politics", src.politics)
         addHackElement(jsonObject, "deploy", src.deploy)
         addHackElement(jsonObject, "forfeit", src.forfeit)
-
         src.icons?.let {
             val iconsArray = JsonArray()
             it.forEach { iconsArray.add(it) }
