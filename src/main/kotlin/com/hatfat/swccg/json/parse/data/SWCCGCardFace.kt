@@ -18,14 +18,14 @@ data class SWCCGCardFace(
     val politics: String?,
     val deploy: String?,
     val forfeit: String?,
-    val icons: List<String>?,
+    val icons: MutableList<String>?,
     val lightSideIcons: Int?,
     val darkSideIcons: Int?,
-    val characteristics: List<String>?,
+    val characteristics: MutableList<String>?,
     val gametext: String?,
     val parsec: String?,
     val lore: String?,
-    val extraText: List<String>?
+    val extraText: MutableList<String>?
 ) : Serializable, Comparable<SWCCGCardFace> {
 
     /* default constructor that gson will call.  otherwise the lazy property will not work */

@@ -4,6 +4,7 @@ import java.io.Serializable
 
 data class SWCCGCard(
     val id: Int?,
+    var gempId: String?,
     val side: String?,
     val rarity: String?,
     val set: String?,
