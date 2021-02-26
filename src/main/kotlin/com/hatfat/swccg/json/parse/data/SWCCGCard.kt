@@ -3,13 +3,15 @@ package com.hatfat.swccg.json.parse.data
 import java.io.Serializable
 
 data class SWCCGCard(
-    val id: Int?,
+    var id: Int?,
+
+    @Transient
     var gempId: String?,
     val side: String?,
     val rarity: String?,
-    val set: String?,
-    val front: SWCCGCardFace,
-    val back: SWCCGCardFace?,
+    var set: String?,
+    var front: SWCCGCardFace,
+    var back: SWCCGCardFace?,
     val conceptBy: String?,
     val pulls: List<String>?,
     val pulledBy: List<String>?,

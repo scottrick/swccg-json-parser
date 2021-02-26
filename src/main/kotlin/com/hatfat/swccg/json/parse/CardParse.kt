@@ -11,6 +11,8 @@ class CardParse(
     private val setNameMap = mutableMapOf<String, String>()
     private val invSetNameMap = mutableMapOf<String, String>()
 
+    private var currentMaxId = 0;
+
     init {
         /* gemp set to json set name map */
         setNameMap["Premiere"] = "Premiere"
@@ -58,6 +60,8 @@ class CardParse(
         setNameMap.forEach {
             invSetNameMap[it.value] = it.key
         }
+
+        invSetNameMap["Virtual Premium Set"] = "VirtualPremium"
     }
 
     private val cardIdMapToGempId = mutableMapOf<Int, String>()
@@ -166,6 +170,10 @@ class CardParse(
         updateIcons(lightCardList)
         updateIcons(darkCardList)
 
+        currentMaxId = listOf(lightCardList, darkCardList).map {
+            it.cards.map { card -> card.id ?: 0 }.maxOrNull() ?: 0
+        }.maxOrNull() ?: 0
+
         lightCardList.cards.forEach {
             if (it.gempId == null && it.legacy == false) {
                 println("MissingGempId --> ${it.front.title}")
@@ -179,19 +187,36 @@ class CardParse(
 
         gempSetMap.forEach { pair ->
             pair.value.forEach inside@{
+                /* Check EACH card we didn't successfully map from GEMP to our json data */
                 if (it.value.endsWith("_BACK")) {
                     /* backside of an objective */
                     return@inside
                 }
 
                 if (it.value.startsWith("105_")) {
-                    /* second anthology */
-                    return@inside
+                    /* first anthology */
+                    if (duplicateCardForNewSet(
+                            listOf(lightCardList, darkCardList),
+                            it.key,
+                            listOf("Special Edition"),
+                            "First Anthology"
+                        )
+                    ) {
+                        return@inside
+                    }
                 }
 
                 if (it.value.startsWith("107_")) {
                     /* second anthology */
-                    return@inside
+                    if (duplicateCardForNewSet(
+                            listOf(lightCardList, darkCardList),
+                            it.key,
+                            listOf("Special Edition", "Endor", "Death Star II"),
+                            "Second Anthology"
+                        )
+                    ) {
+                        return@inside
+                    }
                 }
 
                 if (gempCardIdsToIgnore.contains(it.value)) {
@@ -202,6 +227,9 @@ class CardParse(
                 println("UnhandledGempCard --> $it")
             }
         }
+
+        updateCardUrls(lightCardList)
+        updateCardUrls(darkCardList)
 
         /* write out updated card lists */
         val lightOutputFile = File("output/Light.json")
@@ -221,6 +249,63 @@ class CardParse(
         gson.toJson(darkCardList, darkWriter)
         darkWriter.close()
         darkOutputStream.close()
+    }
+
+    private fun updateCardUrls(cardList: SWCCGCardList) {
+        cardList.cards.forEach { card ->
+            updateCardUrlForFace(card.front)
+            card.back?.let {
+                updateCardUrlForFace(it)
+            }
+        }
+    }
+
+    private fun updateCardUrlForFace(face: SWCCGCardFace) {
+        face.imageUrl = face.imageUrl?.replace("Images-HT/starwars/", "")
+        face.imageUrl = face.imageUrl?.replace("?raw=true", "")
+    }
+
+    private fun duplicateCardForNewSet(
+        cardListList: List<SWCCGCardList>,
+        gempCardUrl: String,
+        originalSet: List<String>,
+        newSet: String
+    ): Boolean {
+        cardListList.forEach { cardList ->
+            val originalCard = cardList.cards.filter { card ->
+                originalSet.contains(card.set)
+            }.find { card ->
+                card.front.imageUrl?.contains(gempCardUrl) == true
+            }
+
+            if (originalCard != null) {
+                /* found the original version of the card, lets copy and create a new one */
+                val cardCopy = originalCard.copy()
+                cardCopy.front = cardCopy.front.copy()
+                cardCopy.back = cardCopy.back?.copy()
+
+                cardCopy.id = currentMaxId + 1
+                cardCopy.set = newSet
+                currentMaxId++
+
+                val originalNoSpaces = originalCard.set?.replace(" ", "") ?: ""
+                val newNoSpaces = newSet.replace(" ", "")
+
+                cardCopy.front.let { front ->
+                    front.imageUrl = front.imageUrl?.replace(originalNoSpaces, newNoSpaces)
+                }
+                cardCopy.back?.let { back ->
+                    back.imageUrl = back.imageUrl?.replace(originalNoSpaces, newNoSpaces)
+                }
+
+                println("CreatedNewAnthologyVersion --> ${cardCopy.front.title}")
+                cardList.cards.add(cardCopy)
+
+                return true
+            }
+        }
+
+        return false
     }
 
     private fun updateGempId(cardList: SWCCGCardList, map: Map<String, MutableMap<String, String>>) {
@@ -276,9 +361,6 @@ class CardParse(
                 allCharacteristics.addAll(characteristics)
             }
         }
-
-        //println("ICONS: $allIcons")
-        //println("CHARS: $allCharacteristics")
     }
 
     private val iconTypoFixMap = mutableMapOf<String, String>()

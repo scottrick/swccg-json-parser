@@ -4,7 +4,7 @@ import java.io.Serializable
 
 data class SWCCGCardFace(
     val title: String?,
-    val imageUrl: String?,
+    var imageUrl: String?,
     val type: String?,
     val subType: String?,
     val uniqueness: String?,
