@@ -11,6 +11,5 @@ fun main(args: Array<String>) {
 
     val cardParse = CardParse(gson)
     cardParse.lightDarkJsonWork()
-    //parseSets(gson)
+//    parseSets(gson)
 }
-

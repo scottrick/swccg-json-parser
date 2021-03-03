@@ -1,9 +1,14 @@
 package com.hatfat.swccg.json.parse
 
 import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.hatfat.swccg.json.parse.data.SWCCGCardFace
 import com.hatfat.swccg.json.parse.data.SWCCGCardList
+import com.hatfat.swccg.json.parse.data.SWCCGSet
 import java.io.*
+import java.lang.reflect.Type
+import java.util.*
+
 
 class CardParse(
     private val gson: Gson
@@ -124,6 +129,14 @@ class CardParse(
         println("Found ${lightCardList.cards.size} light side cards.")
         println("Found ${darkCardList.cards.size} dark side cards.")
 
+        println("Parsing sets.json...")
+        val setsInputStream = FileInputStream(File("input/sets.json"))
+        val setsReader = BufferedReader(InputStreamReader(setsInputStream))
+        val setsListType: Type = object : TypeToken<List<SWCCGSet>>() {}.type
+        val setsList = gson.fromJson<List<SWCCGSet>>(setsReader, setsListType)
+
+        println("Found ${setsList.size} sets.")
+
         println("Reading jCards.js...")
         val gempInputStream = FileInputStream(File("input/jCards.js"))
         val gempReader = BufferedReader(InputStreamReader(gempInputStream))
@@ -185,6 +198,7 @@ class CardParse(
             }
         }
 
+        /*
         gempSetMap.forEach { pair ->
             pair.value.forEach inside@{
                 /* Check EACH card we didn't successfully map from GEMP to our json data */
@@ -195,11 +209,11 @@ class CardParse(
 
                 if (it.value.startsWith("105_")) {
                     /* first anthology */
-                    if (duplicateCardForNewSet(
+                    if (handleDuplicateCardSet(
                             listOf(lightCardList, darkCardList),
                             it.key,
                             listOf("Special Edition"),
-                            "First Anthology"
+                            "105"
                         )
                     ) {
                         return@inside
@@ -208,11 +222,11 @@ class CardParse(
 
                 if (it.value.startsWith("107_")) {
                     /* second anthology */
-                    if (duplicateCardForNewSet(
+                    if (handleDuplicateCardSet(
                             listOf(lightCardList, darkCardList),
                             it.key,
                             listOf("Special Edition", "Endor", "Death Star II"),
-                            "Second Anthology"
+                            "107"
                         )
                     ) {
                         return@inside
@@ -227,9 +241,19 @@ class CardParse(
                 println("UnhandledGempCard --> $it")
             }
         }
+         */
 
         updateCardUrls(lightCardList)
         updateCardUrls(darkCardList)
+
+//        updateCardSet(lightCardList, setsList)
+//        updateCardSet(darkCardList, setsList)
+
+        moveVirtualShieldsToNewSet(lightCardList)
+        moveVirtualShieldsToNewSet(darkCardList)
+
+        validateCardSets(lightCardList)
+        validateCardSets(darkCardList)
 
         /* write out updated card lists */
         val lightOutputFile = File("output/Light.json")
@@ -251,6 +275,116 @@ class CardParse(
         darkOutputStream.close()
     }
 
+    private fun moveVirtualShieldsToNewSet(cardList: SWCCGCardList) {
+        cardList.cards.forEach {
+
+            if (it.front.type == "Defensive Shield") {
+                if (it.sets?.contains("13") == true) {
+                    //ref3
+                } else if (it.sets?.contains("1000d") == true) {
+                    //virtual block shields
+                } else if (it.sets?.contains("1008") == true) {
+                    //virtual block 8
+                    val newSets = it.sets?.toMutableSet() ?: mutableSetOf<String>()
+                    newSets.remove("1008")
+                    newSets.add("1000d")
+                    it.sets = newSets
+                } else if (it.sets?.contains("301") == true) {
+                    //virtual premium set
+                    val newSets = it.sets?.toMutableSet() ?: mutableSetOf<String>()
+                    newSets.remove("301")
+                    newSets.add("200d")
+                    it.sets = newSets
+                } else if (it.sets?.contains("203") == true) {
+                    //virtual set 3
+                    val newSets = it.sets?.toMutableSet() ?: mutableSetOf<String>()
+                    newSets.remove("203")
+                    newSets.add("200d")
+                    it.sets = newSets
+                } else if (it.sets?.contains("209") == true) {
+                    //virtual premium set
+                    val newSets = it.sets?.toMutableSet() ?: mutableSetOf<String>()
+                    newSets.remove("209")
+                    newSets.add("200d")
+                    it.sets = newSets
+                } else if (it.sets?.contains("213") == true) {
+                    //virtual premium set
+                    val newSets = it.sets?.toMutableSet() ?: mutableSetOf<String>()
+                    newSets.remove("213")
+                    newSets.add("200d")
+                    it.sets = newSets
+                } else if (it.sets?.contains("200") == true) {
+                    //virtual set 0
+                    val newSets = it.sets?.toMutableSet() ?: mutableSetOf<String>()
+                    newSets.remove("200")
+                    newSets.add("200d")
+                    it.sets = newSets
+                } else {
+                    println("Didn't handle shield from sets ${it.sets}.")
+                }
+            }
+        }
+    }
+
+    private fun validateCardSets(cardList: SWCCGCardList) {
+        cardList.cards.forEach {
+            it.sets.let { sets ->
+                if (sets == null || sets.isEmpty()) {
+                    println(" --> NoSetsForCard ${it.front.title}")
+                    return@forEach
+                }
+
+                if (it.front.type == "Defensive Shield") {
+                    if (sets.contains("200d")) {
+                        //virtual defensive shield set
+                    } else if (sets.contains("1000d")) {
+                        //virtual block shield set
+                    } else if (sets.contains("13")) {
+                        //ref3
+                    } else {
+                        println(" --> Defensive Shield NOT in a Defensive Shield Set or ref3. $sets")
+                    }
+                }
+
+                if (sets.contains("200d") && (it.front.type != "Defensive Shield")) {
+                    println(" --> Non Defensive Shield in Defensive Shield Set.")
+                }
+
+//                if (sets.size != 1) {
+//                    println(" --> Card ${it.front.title} is in more than one set! [${sets.size}]")
+//                }
+            }
+        }
+    }
+
+    private fun updateCardSet(cardList: SWCCGCardList, sets: List<SWCCGSet>) {
+        cardList.cards.forEach { card ->
+            /* for now just map "Demo Deck" to "Virtual Premium Set" */
+            if (card.set == "Demo Deck") {
+                card.set = "Virtual Premium Set"
+            }
+
+            /* for now just map "Virtual Defensive Shield" to "Virtual Block Shields" */
+            if (card.set == "Virtual Defensive Shield") {
+                card.set = "Virtual Block Shields"
+            }
+
+            val set = sets.find { set ->
+                set.name == card.set || set.gempName == card.set
+            }
+
+            if (set == null) {
+                println("Failed to find set for ${card.front.title} : ${card.set} : ${card.legacy}")
+                return@forEach
+            }
+
+            val setsList = card.sets?.toMutableSet() ?: mutableSetOf()
+            setsList.add(set.id)
+
+            card.sets = setsList
+        }
+    }
+
     private fun updateCardUrls(cardList: SWCCGCardList) {
         cardList.cards.forEach { card ->
             updateCardUrlForFace(card.front)
@@ -265,11 +399,11 @@ class CardParse(
         face.imageUrl = face.imageUrl?.replace("?raw=true", "")
     }
 
-    private fun duplicateCardForNewSet(
+    private fun handleDuplicateCardSet(
         cardListList: List<SWCCGCardList>,
         gempCardUrl: String,
         originalSet: List<String>,
-        newSet: String
+        newSetId: String
     ): Boolean {
         cardListList.forEach { cardList ->
             val originalCard = cardList.cards.filter { card ->
@@ -279,7 +413,14 @@ class CardParse(
             }
 
             if (originalCard != null) {
+                /* found original, lets add the new set! */
+                val setsList = originalCard.sets?.toMutableSet() ?: mutableSetOf()
+                setsList.add(newSetId)
+
+                originalCard.sets = setsList
+
                 /* found the original version of the card, lets copy and create a new one */
+                /*
                 val cardCopy = originalCard.copy()
                 cardCopy.front = cardCopy.front.copy()
                 cardCopy.back = cardCopy.back?.copy()
@@ -300,6 +441,7 @@ class CardParse(
 
                 println("CreatedNewAnthologyVersion --> ${cardCopy.front.title}")
                 cardList.cards.add(cardCopy)
+                 */
 
                 return true
             }

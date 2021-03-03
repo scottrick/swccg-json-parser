@@ -4,12 +4,12 @@ import java.io.Serializable
 
 data class SWCCGCard(
     var id: Int?,
-
-    @Transient
     var gempId: String?,
     val side: String?,
     val rarity: String?,
+    @Transient
     var set: String?,
+    var sets: Set<String>?,
     var front: SWCCGCardFace,
     var back: SWCCGCardFace?,
     val conceptBy: String?,
