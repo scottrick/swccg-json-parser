@@ -7,9 +7,8 @@ data class SWCCGCard(
     var gempId: String?,
     val side: String?,
     val rarity: String?,
-    @Transient
     var set: String?,
-    var sets: Set<String>?,
+    var printings: Set<SWCCGPrinting>?,
     var front: SWCCGCardFace,
     var back: SWCCGCardFace?,
     val conceptBy: String?,

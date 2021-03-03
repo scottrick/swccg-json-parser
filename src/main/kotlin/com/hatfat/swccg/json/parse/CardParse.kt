@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.hatfat.swccg.json.parse.data.SWCCGCardFace
 import com.hatfat.swccg.json.parse.data.SWCCGCardList
+import com.hatfat.swccg.json.parse.data.SWCCGPrinting
 import com.hatfat.swccg.json.parse.data.SWCCGSet
 import java.io.*
 import java.lang.reflect.Type
@@ -198,7 +199,6 @@ class CardParse(
             }
         }
 
-        /*
         gempSetMap.forEach { pair ->
             pair.value.forEach inside@{
                 /* Check EACH card we didn't successfully map from GEMP to our json data */
@@ -241,13 +241,12 @@ class CardParse(
                 println("UnhandledGempCard --> $it")
             }
         }
-         */
 
         updateCardUrls(lightCardList)
         updateCardUrls(darkCardList)
 
-//        updateCardSet(lightCardList, setsList)
-//        updateCardSet(darkCardList, setsList)
+        updateCardSetAndPrintings(lightCardList, setsList)
+        updateCardSetAndPrintings(darkCardList, setsList)
 
         moveVirtualShieldsToNewSet(lightCardList)
         moveVirtualShieldsToNewSet(darkCardList)
@@ -279,48 +278,30 @@ class CardParse(
         cardList.cards.forEach {
 
             if (it.front.type == "Defensive Shield") {
-                if (it.sets?.contains("13") == true) {
+                if (it.set == "13") {
                     //ref3
-                } else if (it.sets?.contains("1000d") == true) {
+                } else if (it.set == "1000d") {
                     //virtual block shields
-                } else if (it.sets?.contains("1008") == true) {
+                } else if (it.set == "1008") {
                     //virtual block 8
-                    val newSets = it.sets?.toMutableSet() ?: mutableSetOf<String>()
-                    newSets.remove("1008")
-                    newSets.add("1000d")
-                    it.sets = newSets
-                } else if (it.sets?.contains("301") == true) {
+                    it.set = "1000d"
+                } else if (it.set == "301") {
                     //virtual premium set
-                    val newSets = it.sets?.toMutableSet() ?: mutableSetOf<String>()
-                    newSets.remove("301")
-                    newSets.add("200d")
-                    it.sets = newSets
-                } else if (it.sets?.contains("203") == true) {
+                    it.set = "200d"
+                } else if (it.set == "203") {
                     //virtual set 3
-                    val newSets = it.sets?.toMutableSet() ?: mutableSetOf<String>()
-                    newSets.remove("203")
-                    newSets.add("200d")
-                    it.sets = newSets
-                } else if (it.sets?.contains("209") == true) {
-                    //virtual premium set
-                    val newSets = it.sets?.toMutableSet() ?: mutableSetOf<String>()
-                    newSets.remove("209")
-                    newSets.add("200d")
-                    it.sets = newSets
-                } else if (it.sets?.contains("213") == true) {
-                    //virtual premium set
-                    val newSets = it.sets?.toMutableSet() ?: mutableSetOf<String>()
-                    newSets.remove("213")
-                    newSets.add("200d")
-                    it.sets = newSets
-                } else if (it.sets?.contains("200") == true) {
+                    it.set = "200d"
+                } else if (it.set == "209") {
+                    //virtual set 9
+                    it.set = "200d"
+                } else if (it.set == "213") {
+                    //virtual set 13
+                    it.set = "200d"
+                } else if (it.set == "200") {
                     //virtual set 0
-                    val newSets = it.sets?.toMutableSet() ?: mutableSetOf<String>()
-                    newSets.remove("200")
-                    newSets.add("200d")
-                    it.sets = newSets
+                    it.set = "200d"
                 } else {
-                    println("Didn't handle shield from sets ${it.sets}.")
+                    println("Didn't handle shield from set ${it.set}.")
                 }
             }
         }
@@ -328,36 +309,37 @@ class CardParse(
 
     private fun validateCardSets(cardList: SWCCGCardList) {
         cardList.cards.forEach {
-            it.sets.let { sets ->
-                if (sets == null || sets.isEmpty()) {
-                    println(" --> NoSetsForCard ${it.front.title}")
+            it.set.let { set ->
+                if (set == null) {
+                    println(" --> NoSetForCard ${it.front.title}")
                     return@forEach
                 }
 
                 if (it.front.type == "Defensive Shield") {
-                    if (sets.contains("200d")) {
-                        //virtual defensive shield set
-                    } else if (sets.contains("1000d")) {
-                        //virtual block shield set
-                    } else if (sets.contains("13")) {
-                        //ref3
-                    } else {
-                        println(" --> Defensive Shield NOT in a Defensive Shield Set or ref3. $sets")
+                    when (set) {
+                        "200d", //virtual defensive shield set
+                        "1000d", //virtual block shield set
+                        "13" -> { //ref3
+
+                        }
+                        else -> {
+                            println(" --> Defensive Shield NOT in a Defensive Shield Set or ref3. $set")
+                        }
                     }
                 }
 
-                if (sets.contains("200d") && (it.front.type != "Defensive Shield")) {
+                if (set == "200d" && (it.front.type != "Defensive Shield")) {
                     println(" --> Non Defensive Shield in Defensive Shield Set.")
                 }
 
-//                if (sets.size != 1) {
-//                    println(" --> Card ${it.front.title} is in more than one set! [${sets.size}]")
-//                }
+                if (it.printings?.size != 1) {
+                    println(" --> Card ${it.front.title} does not have exactly one printing! [${it.printings?.size}]")
+                }
             }
         }
     }
 
-    private fun updateCardSet(cardList: SWCCGCardList, sets: List<SWCCGSet>) {
+    private fun updateCardSetAndPrintings(cardList: SWCCGCardList, sets: List<SWCCGSet>) {
         cardList.cards.forEach { card ->
             /* for now just map "Demo Deck" to "Virtual Premium Set" */
             if (card.set == "Demo Deck") {
@@ -378,10 +360,12 @@ class CardParse(
                 return@forEach
             }
 
-            val setsList = card.sets?.toMutableSet() ?: mutableSetOf()
-            setsList.add(set.id)
+            card.set = set.id
 
-            card.sets = setsList
+            val printingsSet = card.printings?.toMutableSet() ?: mutableSetOf()
+            printingsSet.add(SWCCGPrinting(set.id))
+
+            card.printings = printingsSet
         }
     }
 
@@ -413,35 +397,11 @@ class CardParse(
             }
 
             if (originalCard != null) {
-                /* found original, lets add the new set! */
-                val setsList = originalCard.sets?.toMutableSet() ?: mutableSetOf()
-                setsList.add(newSetId)
+                /* found original, lets add the new printing! */
+                val printingsSet = originalCard.printings?.toMutableSet() ?: mutableSetOf()
+                printingsSet.add(SWCCGPrinting(newSetId))
 
-                originalCard.sets = setsList
-
-                /* found the original version of the card, lets copy and create a new one */
-                /*
-                val cardCopy = originalCard.copy()
-                cardCopy.front = cardCopy.front.copy()
-                cardCopy.back = cardCopy.back?.copy()
-
-                cardCopy.id = currentMaxId + 1
-                cardCopy.set = newSet
-                currentMaxId++
-
-                val originalNoSpaces = originalCard.set?.replace(" ", "") ?: ""
-                val newNoSpaces = newSet.replace(" ", "")
-
-                cardCopy.front.let { front ->
-                    front.imageUrl = front.imageUrl?.replace(originalNoSpaces, newNoSpaces)
-                }
-                cardCopy.back?.let { back ->
-                    back.imageUrl = back.imageUrl?.replace(originalNoSpaces, newNoSpaces)
-                }
-
-                println("CreatedNewAnthologyVersion --> ${cardCopy.front.title}")
-                cardList.cards.add(cardCopy)
-                 */
+                originalCard.printings = printingsSet
 
                 return true
             }
