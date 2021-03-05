@@ -39,7 +39,7 @@ fun parseSets(gson: Gson) {
     abbrMap["14"] = "TP"
 
     abbrMap["101"] = "P2P"
-    abbrMap["102"] = "J"
+    abbrMap["102"] = "JEDI"
     abbrMap["103"] = "RLP"
     abbrMap["104"] = "ESB2P"
     abbrMap["105"] = "1A"
