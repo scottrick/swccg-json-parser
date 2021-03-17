@@ -65,9 +65,9 @@ class LegacySplit(
             println(" --> ERROR: Light card count does not align.")
         }
 
-        writeCardList(lightLegacy, "output/Light-legacy.json")
+        writeCardList(lightLegacy, "output/LightLegacy.json")
         writeCardList(lightCurrent, "output/Light.json")
-        writeCardList(darkLegacy, "output/Dark-legacy.json")
+        writeCardList(darkLegacy, "output/DarkLegacy.json")
         writeCardList(darkCurrent, "output/Dark.json")
     }
 

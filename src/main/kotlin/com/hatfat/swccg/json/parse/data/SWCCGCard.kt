@@ -15,7 +15,7 @@ data class SWCCGCard(
     val pulls: List<String>?,
     val pulledBy: List<String>?,
     val counterpart: String?,
-    val combo: List<String>?,
+    var combo: List<String>?,
     val matching: List<String>?,
     val matchingWeapon: List<String>?,
     val canceledBy: List<String>?,

@@ -9,10 +9,7 @@ fun main(args: Array<String>) {
         .disableHtmlEscaping()
         .create()
 
-    val splitWork = LegacySplit(gson)
-    splitWork.doSplitWork()
-
-//    val cardParse = CardParse(gson)
-//    cardParse.lightDarkJsonWork()
+    val cardParse = CardParse(gson)
+    cardParse.lightDarkJsonWork()
 //    parseSets(gson)
 }

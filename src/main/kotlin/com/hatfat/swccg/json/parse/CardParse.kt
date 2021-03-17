@@ -17,8 +17,6 @@ class CardParse(
     private val setNameMap = mutableMapOf<String, String>()
     private val invSetNameMap = mutableMapOf<String, String>()
 
-    private var currentMaxId = 0;
-
     init {
         /* gemp set to json set name map */
         setNameMap["Premiere"] = "Premiere"
@@ -118,17 +116,27 @@ class CardParse(
     }
 
     fun lightDarkJsonWork() {
-        println("Parsing Dark/Light json...")
-        val lightInputStream = FileInputStream(File("input/Light.json"))
-        val lightReader = BufferedReader(InputStreamReader(lightInputStream))
-        val lightCardList = gson.fromJson(lightReader, SWCCGCardList::class.java)
+        println("Parsing Dark/Light Current/Legacy json...")
+        val lightCurrentInputStream = FileInputStream(File("input/Light.json"))
+        val lightCurrentReader = BufferedReader(InputStreamReader(lightCurrentInputStream))
+        val lightCurrent = gson.fromJson(lightCurrentReader, SWCCGCardList::class.java)
 
-        val darkInputStream = FileInputStream(File("input/Dark.json"))
-        val darkReader = BufferedReader(InputStreamReader(darkInputStream))
-        val darkCardList = gson.fromJson(darkReader, SWCCGCardList::class.java)
+        val darkCurrentInputStream = FileInputStream(File("input/Dark.json"))
+        val darkCurrentReader = BufferedReader(InputStreamReader(darkCurrentInputStream))
+        val darkCurrent = gson.fromJson(darkCurrentReader, SWCCGCardList::class.java)
 
-        println("Found ${lightCardList.cards.size} light side cards.")
-        println("Found ${darkCardList.cards.size} dark side cards.")
+        val lightLegacyInputStream = FileInputStream(File("input/LightLegacy.json"))
+        val lightLegacyReader = BufferedReader(InputStreamReader(lightLegacyInputStream))
+        val lightLegacy = gson.fromJson(lightLegacyReader, SWCCGCardList::class.java)
+
+        val darkLegacyInputStream = FileInputStream(File("input/DarkLegacy.json"))
+        val darkLegacyReader = BufferedReader(InputStreamReader(darkLegacyInputStream))
+        val darkLegacy = gson.fromJson(darkLegacyReader, SWCCGCardList::class.java)
+
+        println("Found ${lightCurrent.cards.size} current light side cards.")
+        println("Found ${darkCurrent.cards.size} current dark side cards.")
+        println("Found ${lightLegacy.cards.size} legacy light side cards.")
+        println("Found ${darkLegacy.cards.size} legacy dark side cards.")
 
         println("Parsing sets.json...")
         val setsInputStream = FileInputStream(File("input/sets.json"))
@@ -138,6 +146,43 @@ class CardParse(
 
         println("Found ${setsList.size} sets.")
 
+        val cardLists = listOf(lightCurrent, lightLegacy, darkCurrent, darkLegacy)
+
+        cardLists.forEach {
+            updateIcons(it)
+            checkGempIds(it)
+            updateCardUrls(it)
+//            fixDefensiveShieldPrintings(it)
+            fixComboStrings(it)
+            validateCardSets(it)
+        }
+
+        writeCardList(lightLegacy, "output/LightLegacy.json")
+        writeCardList(lightCurrent, "output/Light.json")
+        writeCardList(darkLegacy, "output/DarkLegacy.json")
+        writeCardList(darkCurrent, "output/Dark.json")
+    }
+
+    private fun writeCardList(cardList: SWCCGCardList, filename: String) {
+        val outputFile = File(filename)
+        outputFile.parentFile.mkdirs()
+        outputFile.createNewFile()
+        val outputStream = FileOutputStream(outputFile)
+        val writer = BufferedWriter(OutputStreamWriter(outputStream))
+        gson.toJson(cardList, writer)
+        writer.close()
+        outputStream.close()
+    }
+
+    private fun checkGempIds(cardList: SWCCGCardList) {
+        cardList.cards.forEach {
+            if (it.gempId == null && it.legacy == false) {
+                println("MissingGempId --> ${it.front.title}")
+            }
+        }
+    }
+
+    private fun gempWork() {
         println("Reading jCards.js...")
         val gempInputStream = FileInputStream(File("input/jCards.js"))
         val gempReader = BufferedReader(InputStreamReader(gempInputStream))
@@ -179,26 +224,7 @@ class CardParse(
             }
         }
 
-        updateGempId(lightCardList, gempSetMap)
-        updateGempId(darkCardList, gempSetMap)
-        updateIcons(lightCardList)
-        updateIcons(darkCardList)
-
-        currentMaxId = listOf(lightCardList, darkCardList).map {
-            it.cards.map { card -> card.id ?: 0 }.maxOrNull() ?: 0
-        }.maxOrNull() ?: 0
-
-        lightCardList.cards.forEach {
-            if (it.gempId == null && it.legacy == false) {
-                println("MissingGempId --> ${it.front.title}")
-            }
-        }
-        darkCardList.cards.forEach {
-            if (it.gempId == null && it.legacy == false) {
-                println("MissingGempId --> ${it.front.title}")
-            }
-        }
-
+        /*
         gempSetMap.forEach { pair ->
             pair.value.forEach inside@{
                 /* Check EACH card we didn't successfully map from GEMP to our json data */
@@ -241,42 +267,11 @@ class CardParse(
                 println("UnhandledGempCard --> $it")
             }
         }
-
-        updateCardUrls(lightCardList)
-        updateCardUrls(darkCardList)
-
-        updateCardSetAndPrintings(lightCardList, setsList)
-        updateCardSetAndPrintings(darkCardList, setsList)
-
-        moveVirtualShieldsToNewSet(lightCardList)
-        moveVirtualShieldsToNewSet(darkCardList)
-
-        validateCardSets(lightCardList)
-        validateCardSets(darkCardList)
-
-        /* write out updated card lists */
-        val lightOutputFile = File("output/Light.json")
-        lightOutputFile.parentFile.mkdirs()
-        lightOutputFile.createNewFile()
-        val lightOutputStream = FileOutputStream(lightOutputFile)
-        val lightWriter = BufferedWriter(OutputStreamWriter(lightOutputStream))
-        gson.toJson(lightCardList, lightWriter)
-        lightWriter.close()
-        lightOutputStream.close()
-
-        val darkOutputFile = File("output/Dark.json")
-        darkOutputFile.parentFile.mkdirs()
-        darkOutputFile.createNewFile()
-        val darkOutputStream = FileOutputStream(darkOutputFile)
-        val darkWriter = BufferedWriter(OutputStreamWriter(darkOutputStream))
-        gson.toJson(darkCardList, darkWriter)
-        darkWriter.close()
-        darkOutputStream.close()
+         */
     }
 
     private fun moveVirtualShieldsToNewSet(cardList: SWCCGCardList) {
         cardList.cards.forEach {
-
             if (it.front.type == "Defensive Shield") {
                 if (it.set == "13") {
                     //ref3
@@ -326,6 +321,14 @@ class CardParse(
                             println(" --> Defensive Shield NOT in a Defensive Shield Set or ref3. $set")
                         }
                     }
+
+                    if (it.printings?.size != 1) {
+                        println(" --> Defensive Shield in more than one set.")
+                    }
+
+                    if (set == "200d" && it.printings?.contains(SWCCGPrinting("200d")) == false) {
+                        println(" --> Defensive Shield does not have 200d printing.")
+                    }
                 }
 
                 if (set == "200d" && (it.front.type != "Defensive Shield")) {
@@ -333,7 +336,37 @@ class CardParse(
                 }
 
                 if (it.printings?.size != 1) {
-                    println(" --> Card ${it.front.title} does not have exactly one printing! [${it.printings?.size}]")
+//                    println(" --> Card ${it.front.title} does not have exactly one printing! [${it.printings?.size}]")
+                }
+            }
+        }
+    }
+
+    private fun fixComboStrings(cardList: SWCCGCardList) {
+        cardList.cards.forEach { card ->
+            if (card.combo?.isNotEmpty() == true) {
+                card.combo = card.combo?.map { it.trim() }
+            }
+        }
+    }
+
+    private fun fixDefensiveShieldPrintings(cardList: SWCCGCardList) {
+        cardList.cards.forEach { card ->
+            if (card.set == "200d") {
+                /* card is in the defensive shield set */
+                if (card.printings?.size != 1) {
+                    println(" --> Card ${card.front.title} is a defensive shield and does not have exactly one printing.")
+                } else {
+                    card.printings = mutableSetOf(SWCCGPrinting("200d"))
+                }
+            }
+
+            if (card.set == "1000d") {
+                /* card is in the defensive shield block*/
+                if (card.printings?.size != 1) {
+                    println(" --> Card ${card.front.title} is a defensive shield and does not have exactly one printing.")
+                } else {
+                    card.printings = mutableSetOf(SWCCGPrinting("1000d"))
                 }
             }
         }

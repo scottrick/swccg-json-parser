@@ -1,4 +1,4 @@
-*.iml
+*iml
 .gradle
 /local.properties
 /.idea/caches
@@ -16,6 +16,8 @@ local.properties
 
 .idea/
 
+LightLegacy.json
+DarkLegacy.json
 Light.json
 Dark.json
 jCards.js
