@@ -154,7 +154,7 @@ class CardParse(
             updateCardUrls(it)
 //            fixDefensiveShieldPrintings(it)
             fixComboStrings(it)
-            validateCardSets(it)
+            validateCardSets(it, setsList)
         }
 
         writeCardList(lightLegacy, "output/LightLegacy.json")
@@ -302,12 +302,28 @@ class CardParse(
         }
     }
 
-    private fun validateCardSets(cardList: SWCCGCardList) {
+    private fun validateCardSets(cardList: SWCCGCardList, sets: List<SWCCGSet>) {
         cardList.cards.forEach {
             it.set.let { set ->
                 if (set == null) {
                     println(" --> NoSetForCard ${it.front.title}")
                     return@forEach
+                }
+
+                /* can we find its set? */
+                sets.find { set ->
+                    it.set == set.id
+                }.let { set ->
+                    if (set == null) {
+                        println(" --> InvalidSet ${it.front.title} : ${it.set}")
+                        /* find set based on the name */
+                        sets.find { set ->
+                            it.set == set.gempName || it.set == set.name || it.set == set.abbr
+                        }?.let { set ->
+                            println("     Found set and updated to ${set.id}.")
+                            it.set = set.id
+                        }
+                    }
                 }
 
                 if (it.front.type == "Defensive Shield") {
@@ -322,10 +338,6 @@ class CardParse(
                         }
                     }
 
-                    if (it.printings?.size != 1) {
-                        println(" --> Defensive Shield in more than one set.")
-                    }
-
                     if (set == "200d" && it.printings?.contains(SWCCGPrinting("200d")) == false) {
                         println(" --> Defensive Shield does not have 200d printing.")
                     }
@@ -335,9 +347,29 @@ class CardParse(
                     println(" --> Non Defensive Shield in Defensive Shield Set.")
                 }
 
-                if (it.printings?.size != 1) {
-//                    println(" --> Card ${it.front.title} does not have exactly one printing! [${it.printings?.size}]")
+                if ((it.printings?.size ?: 0) < 1) {
+                    println(" --> Card ${it.front.title} does not have at least one printing! [${it.printings?.size}]")
+
+                    /* automatically add its set as a printing */
+                    val printingsSet = it.printings?.toMutableSet() ?: mutableSetOf()
+                    printingsSet.add(SWCCGPrinting(it.set))
+                    it.printings = printingsSet
                 }
+
+                if (it.legacy == null) {
+                    println(" --> Card ${it.front.title} does not have legacy value.")
+
+                    sets.find { set ->
+                        it.set == set.id
+                    }?.let { set ->
+                        println("     Assigning legacy value from set: ${set.gempName}")
+                        it.legacy = set.legacy
+                    }
+                }
+
+//                if ((it.printings?.size ?: 0) > 1) {
+//                    println(" --> Card ${it.front.title} has more than one printing! [${it.printings?.size}]")
+//                }
             }
         }
     }
@@ -357,7 +389,9 @@ class CardParse(
                 if (card.printings?.size != 1) {
                     println(" --> Card ${card.front.title} is a defensive shield and does not have exactly one printing.")
                 } else {
-                    card.printings = mutableSetOf(SWCCGPrinting("200d"))
+                    val printingsSet = card.printings?.toMutableSet() ?: mutableSetOf()
+                    printingsSet.add(SWCCGPrinting("200d"))
+                    card.printings = printingsSet
                 }
             }
 
@@ -366,7 +400,9 @@ class CardParse(
                 if (card.printings?.size != 1) {
                     println(" --> Card ${card.front.title} is a defensive shield and does not have exactly one printing.")
                 } else {
-                    card.printings = mutableSetOf(SWCCGPrinting("1000d"))
+                    val printingsSet = card.printings?.toMutableSet() ?: mutableSetOf()
+                    printingsSet.add(SWCCGPrinting("1000d"))
+                    card.printings = printingsSet
                 }
             }
         }

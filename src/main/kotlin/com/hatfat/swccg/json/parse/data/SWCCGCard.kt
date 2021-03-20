@@ -20,7 +20,7 @@ data class SWCCGCard(
     val matchingWeapon: List<String>?,
     val canceledBy: List<String>?,
     val cancels: List<String>?,
-    val legacy: Boolean?
+    var legacy: Boolean?
 ) : Serializable, Comparable<SWCCGCard> {
 
     val isFlippable: Boolean
