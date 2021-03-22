@@ -303,30 +303,30 @@ class CardParse(
     }
 
     private fun validateCardSets(cardList: SWCCGCardList, sets: List<SWCCGSet>) {
-        cardList.cards.forEach {
-            it.set.let { set ->
+        cardList.cards.forEach { card ->
+            card.set.let { set ->
                 if (set == null) {
-                    println(" --> NoSetForCard ${it.front.title}")
+                    println(" --> NoSetForCard ${card.front.title}")
                     return@forEach
                 }
 
                 /* can we find its set? */
-                sets.find { set ->
-                    it.set == set.id
-                }.let { set ->
-                    if (set == null) {
-                        println(" --> InvalidSet ${it.front.title} : ${it.set}")
+                sets.find {
+                    card.set == it.id
+                }.let {
+                    if (it == null) {
+                        println(" --> InvalidSet ${card.front.title} : ${card.set}")
                         /* find set based on the name */
                         sets.find { set ->
-                            it.set == set.gempName || it.set == set.name || it.set == set.abbr
+                            card.set == set.gempName || card.set == set.name || card.set == set.abbr
                         }?.let { set ->
                             println("     Found set and updated to ${set.id}.")
-                            it.set = set.id
+                            card.set = set.id
                         }
                     }
                 }
 
-                if (it.front.type == "Defensive Shield") {
+                if (card.front.type == "Defensive Shield") {
                     when (set) {
                         "200d", //virtual defensive shield set
                         "1000d", //virtual block shield set
@@ -338,32 +338,32 @@ class CardParse(
                         }
                     }
 
-                    if (set == "200d" && it.printings?.contains(SWCCGPrinting("200d")) == false) {
+                    if (set == "200d" && card.printings?.contains(SWCCGPrinting("200d")) == false) {
                         println(" --> Defensive Shield does not have 200d printing.")
                     }
                 }
 
-                if (set == "200d" && (it.front.type != "Defensive Shield")) {
+                if (set == "200d" && (card.front.type != "Defensive Shield")) {
                     println(" --> Non Defensive Shield in Defensive Shield Set.")
                 }
 
-                if ((it.printings?.size ?: 0) < 1) {
-                    println(" --> Card ${it.front.title} does not have at least one printing! [${it.printings?.size}]")
+                if ((card.printings?.size ?: 0) < 1) {
+                    println(" --> Card ${card.front.title} does not have at least one printing! [${card.printings?.size}]")
 
                     /* automatically add its set as a printing */
-                    val printingsSet = it.printings?.toMutableSet() ?: mutableSetOf()
-                    printingsSet.add(SWCCGPrinting(it.set))
-                    it.printings = printingsSet
+                    val printingsSet = card.printings?.toMutableSet() ?: mutableSetOf()
+                    printingsSet.add(SWCCGPrinting(card.set))
+                    card.printings = printingsSet
                 }
 
-                if (it.legacy == null) {
-                    println(" --> Card ${it.front.title} does not have legacy value.")
+                if (card.legacy == null) {
+                    println(" --> Card ${card.front.title} does not have legacy value.")
 
-                    sets.find { set ->
-                        it.set == set.id
-                    }?.let { set ->
-                        println("     Assigning legacy value from set: ${set.gempName}")
-                        it.legacy = set.legacy
+                    sets.find {
+                        card.set == it.id
+                    }?.let {
+                        println("     Assigning legacy value from set: ${it.gempName}")
+                        card.legacy = it.legacy
                     }
                 }
 
