@@ -2,10 +2,7 @@ package com.hatfat.swccg.json.parse
 
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.hatfat.swccg.json.parse.data.SWCCGCardFace
-import com.hatfat.swccg.json.parse.data.SWCCGCardList
-import com.hatfat.swccg.json.parse.data.SWCCGPrinting
-import com.hatfat.swccg.json.parse.data.SWCCGSet
+import com.hatfat.swccg.json.parse.data.*
 import java.io.*
 import java.lang.reflect.Type
 import java.util.*
@@ -156,6 +153,8 @@ class CardParse(
             fixComboStrings(it)
             validateCardSets(it, setsList)
         }
+
+        validateIdsAreUnique(cardLists)
 
         writeCardList(lightLegacy, "output/LightLegacy.json")
         writeCardList(lightCurrent, "output/Light.json")
@@ -371,6 +370,35 @@ class CardParse(
 //                    println(" --> Card ${it.front.title} has more than one printing! [${it.printings?.size}]")
 //                }
             }
+        }
+    }
+
+    private fun validateIdsAreUnique(cardLists: List<SWCCGCardList>) {
+        val cardIds = mutableSetOf<Int>()
+        val cardsThatNeedNewIds = mutableListOf<SWCCGCard>()
+
+        for (list in cardLists) {
+            for (card in list.cards) {
+                card.id?.let {
+                    if (cardIds.contains(it)) {
+                        println(" --> Card ID is not unique! ${it}")
+                        cardsThatNeedNewIds.add(card)
+                    }
+
+                    cardIds.add(it)
+                }
+            }
+        }
+
+        val sortedIds = cardIds.toMutableList()
+        sortedIds.sort()
+
+        for (card in cardsThatNeedNewIds) {
+            val newId = sortedIds.last() + 1
+            println(" --> ${card.front.title} is getting a new ID...  $newId")
+
+            card.id = newId
+            sortedIds.add(newId)
         }
     }
 
