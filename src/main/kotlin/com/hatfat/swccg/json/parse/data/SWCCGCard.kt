@@ -3,25 +3,27 @@ package com.hatfat.swccg.json.parse.data
 import java.io.Serializable
 
 data class SWCCGCard(
-    var id: Int?,
-    var gempId: String?,
-    val side: String?,
-    val rarity: String?,
-    var set: String?,
-    var printings: Set<SWCCGPrinting>?,
-    var front: SWCCGCardFace,
+    var abbr: List<String>?,
     var back: SWCCGCardFace?,
-    val conceptBy: String?,
-    val pulls: List<String>?,
-    val pulledBy: List<String>?,
-    val counterpart: String?,
-    var combo: List<String>?,
-    val matching: List<String>?,
-    val matchingWeapon: List<String>?,
     val canceledBy: List<String>?,
     val cancels: List<String>?,
+    var combo: List<String>?,
+    val conceptBy: String?,
+    val counterpart: String?,
+    var front: SWCCGCardFace,
+    var gempId: String?,
+    var id: Int?,
+    var legacy: Boolean?,
+    val matching: List<String>?,
+    val matchingWeapon: List<String>?,
+    var printings: Set<SWCCGPrinting>?,
+    val pulledBy: List<String>?,
+    val pulls: List<String>?,
+    val rarity: String?,
     val rulings: List<String>?,
-    var legacy: Boolean?
+    var set: String?,
+    val side: String?,
+    val sourceType: String?,
 ) : Serializable, Comparable<SWCCGCard> {
 
     val isFlippable: Boolean
