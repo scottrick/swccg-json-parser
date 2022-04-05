@@ -5,7 +5,6 @@ import com.google.gson.reflect.TypeToken
 import com.hatfat.swccg.json.parse.data.*
 import java.io.*
 import java.lang.reflect.Type
-import java.util.*
 
 
 class CardParse(
@@ -25,10 +24,10 @@ class CardParse(
         setNameMap["SpecialEdition"] = "Special Edition"
         setNameMap["Endor"] = "Endor"
         setNameMap["DeathStarII"] = "Death Star II"
-        setNameMap["ReflectionsII"] = "Reflections II"
+        setNameMap["ReflectionsII"] = "Reflections 2"
         setNameMap["Tatooine"] = "Tatooine"
         setNameMap["Coruscant"] = "Coruscant"
-        setNameMap["ReflectionsIII"] = "Reflections III"
+        setNameMap["ReflectionsIII"] = "Reflections 3"
         setNameMap["TheedPalace"] = "Theed Palace"
         setNameMap["PremiereIntroductoryTwoPlayerGame"] = "Premiere Introductory Two Player Game"
         setNameMap["JediPack"] = "Jedi Pack"
@@ -151,6 +150,7 @@ class CardParse(
             updateCardUrls(it)
 //            fixDefensiveShieldPrintings(it)
             fixComboStrings(it)
+            updateReflectionsNaming(it)
             validateCardSets(it, setsList)
         }
 
@@ -406,6 +406,41 @@ class CardParse(
         cardList.cards.forEach { card ->
             if (card.combo?.isNotEmpty() == true) {
                 card.combo = card.combo?.map { it.trim() }
+            }
+        }
+    }
+
+    private fun updateReflectionsNaming(cardList: SWCCGCardList) {
+        cardList.cards.forEach { card ->
+            updateReflectionsIcons(card.front.icons)
+            updateReflectionsIcons(card.back?.icons)
+            updateReflectionsGametext(card.front)
+            updateReflectionsGametext(card.back)
+        }
+    }
+
+    private fun updateReflectionsGametext(cardface: SWCCGCardFace?) {
+        cardface?.gametext?.let {
+            cardface.gametext = it.replace("Reflections III", "Reflections 3")
+        }
+
+        cardface?.gametext?.let {
+            cardface.gametext = it.replace("Reflections II", "Reflections 2")
+        }
+    }
+
+    private fun updateReflectionsIcons(icons: MutableList<String>?) {
+        icons?.replaceAll {
+            when (it) {
+                "Reflections III" -> {
+                    "Reflections 3"
+                }
+                "Reflections II" -> {
+                    "Reflections 2"
+                }
+                else -> {
+                    it
+                }
             }
         }
     }

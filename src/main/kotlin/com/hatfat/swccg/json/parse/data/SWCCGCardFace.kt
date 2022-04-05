@@ -13,7 +13,7 @@ data class SWCCGCardFace(
     val extraText: MutableList<String>?,
     val ferocity: String?,
     val forfeit: String?,
-    val gametext: String?,
+    var gametext: String?,
     val hyperspeed: String?,
     val icons: MutableList<String>?,
     var imageUrl: String?,
