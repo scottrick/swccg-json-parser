@@ -1,0 +1,32 @@
+{
+  "decks": [
+    {
+      "title": "My Fancy Deck Title",
+      "author": "SWCCG Pro",
+      "date": "https://en.wikipedia.org/wiki/ISO_8601",
+      "side": "Light/Dark",
+      // Integer; used to identify this deck.
+      "id": 1234,
+      // Most Recent Expansion set id.  Used to identify the last released set (JPSD, Ref2, V22, etc).
+      "mre": 8,
+      "url": "https://www.starwarsccg.org/deck-url-here/",
+      "notes": [
+        "List of notes related to the deck.",
+        "Decks found in the DeckTech archives often have many paragraphs of supporting text.",
+        "That text can be found here."
+      ],
+      "cards": [
+        {
+          // Integer; found in the card json files.
+          "id": 123,
+          // Number of copies played in the deck.
+          "quantity": 2,
+          // If this card is normally one of your starting cards when beginning a match.  If omitted, assume false.
+          "starting": true,
+          // If this card card exists outside of your normal 60 card deck.  Defensive shields, etc.  If omitted, assume false.
+          "outside": false
+        }
+      ]
+    }
+  ]
+}
