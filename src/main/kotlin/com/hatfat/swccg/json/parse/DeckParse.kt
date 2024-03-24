@@ -5,8 +5,7 @@ import com.hatfat.swccg.json.parse.data.SWCCGDeck
 import java.io.File
 
 class DeckParse(
-    private val directory: String,
-    private val allCards: List<SWCCGCard>
+    private val directory: String, private val allCards: List<SWCCGCard>
 ) {
     private val processedCards = processCardNames(allCards)
     private val cardNames = processedCards.keys
@@ -18,7 +17,7 @@ class DeckParse(
         var count = 0
 
         val dir = File(directory).walkTopDown().forEach { file ->
-            if (file.extension == "md" && count < 4) {
+            if (file.extension == "md" && count < 4000) {
 //                println("found deck: " + file.name)
                 parseFile(file)
                 count++
@@ -83,47 +82,87 @@ class DeckParse(
         assert(rawLines[0].startsWith("Cards:"))
         assert(rawLines[1] == "")
         val lines = rawLines.drop(2)
-        println(lines)
+//        println(lines)
 
 //        val headerRegex = "/\\w+/gm".toRegex()
         val headerRegex = """\w+""".toRegex()
         val reg = Regex("""[0-9]*""")
+        val xRegex = Regex("\\b x\\d+")
 
-        val cards = mutableListOf<String>()
+        val cards = mutableMapOf<String, Int>()
+        val unmatchedLines = mutableListOf<String>()
+
+        var totalCardCount = 0
 
         for (line in lines) {
+            var processedLine = getProcessedCardName(line, false).trim()
+
             if (line.trim().isBlank() || line.trim().isEmpty() || line == "'") {
                 continue
             }
-//            println("checking line: $line")
+
 
 //            val words = headerRegex.findAll(line).toList(c)
 //            if (words.isNotEmpty() && words[0].value.trim().startsWith("start", true)) {
 //                println("found STARTING CARDS! $line")
 //            }
 
+            var count = 1
+
+            // See if the line ends with " x#"
+            if (xRegex.containsMatchIn(processedLine)) {
+                val xIndex = processedLine.lastIndexOf(" x")
+                var countString = processedLine.substring(xIndex + 2)
+
+                var endDigitIndex = 1
+                while (endDigitIndex < countString.length && !countString[endDigitIndex - 1].isDigit()) {
+                    endDigitIndex++
+                }
+
+                // CHOP off the end
+                countString = countString.substring(0, endDigitIndex).trim()
+
+//                if (countString.contains(" ")) {
+//                    var digitIndex = 0
+//                    while (countString[digitIndex].isDigit()) {
+//                        digitIndex++
+//                    }
+//                }
+
+                count = countString.toInt()
+                processedLine = processedLine.substring(0, xIndex)
+            }
+
+            processedLine = getProcessedCardName(processedLine, true).trim()
+
             // First try to find an exact match
             val exact = cardNames.filter { cardName ->
-                cardName.equals(line, true)
+                cardName.equals(processedLine, true)
             }
 
             if (exact.size == 1) {
                 // found one card that matches, add it to the deck
-                cards.add(exact[0])
+                cards[(exact[0])] = count
+                totalCardCount += count
                 continue
             }
 
-            var filtered = partialContains(line)
-            if (filtered.isNotEmpty()) {
-                println("line [$line] filtered ${filtered.size}, matches: $filtered")
-            }
-//            println("Found no match: $line")
+            unmatchedLines.add(processedLine)
+//            println("NO MATCH: $processedLine")
+
+//            val filtered = partialContains(processedLine)
+//            if (filtered.isNotEmpty()) {
+//                println("$line [$processedLine] filtered ${filtered.size}, matches: $filtered")
+//            }
         }
 
-        println("FINISHED parsing deck [${cards.size}]:")
-        for (card in cards) {
-            println("  $card")
-        }
+//        var count = 0
+//        for (card in cards.keys) {
+//            println("  ${cards[card]}x $card")
+//            count += cards[card] ?: 0
+//        }
+
+        println("Finished parsing, found $totalCardCount cards.")
     }
 
     fun partialContains(line: String): List<String> {
@@ -138,18 +177,39 @@ fun processCardNames(cards: List<SWCCGCard>): HashMap<String, SWCCGCard> {
 
     for (card in cards) {
         card.front.title?.let { title ->
-            var processedTitle = title
-            // String starting •
-            while (processedTitle.indexOf("•", 0, true) != -1) {
-                val index = processedTitle.indexOf("•", 0, true)
-                processedTitle = processedTitle.removeRange(index, index + 1)
-//                processedTitle = processedTitle.drop(1)
-            }
-
+            val processedTitle = getProcessedCardName(title, true)
 //            println("$title -> $processedTitle")
             processedCardNames[processedTitle] = card
         }
     }
 
     return processedCardNames
+}
+
+fun getProcessedCardName(cardName: String, shouldRemoveSpaces: Boolean): String {
+    var processedTitle = cardName.toLowerCase()
+
+    val stringsToRemove = mutableListOf<String>();
+    stringsToRemove.add("'")
+    stringsToRemove.add(":")
+    stringsToRemove.add(";")
+    stringsToRemove.add("•")
+    stringsToRemove.add(".")
+    stringsToRemove.add(",")
+    stringsToRemove.add("&")
+    stringsToRemove.add("\\")
+    stringsToRemove.add("/")
+
+    if (shouldRemoveSpaces) {
+        stringsToRemove.add(" ")
+    }
+
+    for (stringToRemove in stringsToRemove) {
+        while (processedTitle.indexOf(stringToRemove, 0, true) != -1) {
+            val index = processedTitle.indexOf(stringToRemove, 0, true)
+            processedTitle = processedTitle.removeRange(index, index + 1)
+        }
+    }
+
+    return processedTitle
 }
