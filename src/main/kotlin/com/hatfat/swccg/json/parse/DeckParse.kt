@@ -1,9 +1,7 @@
 package com.hatfat.swccg.json.parse
 
 import com.hatfat.swccg.json.parse.data.SWCCGCard
-import com.hatfat.swccg.json.parse.data.deck.SWCCGDeck
-import com.hatfat.swccg.json.parse.data.deck.SWCCGDeckEntry
-import com.hatfat.swccg.json.parse.data.deck.createCorrections
+import com.hatfat.swccg.json.parse.data.deck.*
 import java.io.File
 import java.text.DecimalFormat
 
@@ -20,7 +18,10 @@ class DeckParse(
 
     private val lightCardNames = processedLightCards.keys
     private val darkCardNames = processedDarkCards.keys
-    private val corrections = createCorrections()
+    private val lightGeneralCorrections = createLightGeneralCorrections()
+    private val lightExactCorrections = createLightExactCorrections()
+    private val darkGeneralCorrections = createDarkGeneralCorrections()
+    private val darkExactCorrections = createDarkExactCorrections()
 
     fun parse() {
         println("DeckTech Parse")
@@ -30,7 +31,7 @@ class DeckParse(
         var numCardsParsed = 0
 
         var currentDeckNum = 1
-        val deckToParse = 2
+        val deckToParse = 4
 
         val dir =
             File(directory).walkTopDown().forEach { file ->
@@ -79,7 +80,7 @@ class DeckParse(
 
         val deck = SWCCGDeck.create()
 
-        deck.source = deckFile.canonicalFile.absolutePath
+        deck.source = deckFile.name
 
         // Parse header
         val endOfHeaderIndex = lines.indexOfFirst { it == "---" }
@@ -160,7 +161,7 @@ class DeckParse(
             }
 
             // Check and correct common errors
-            processedLine = checkForCorrections(processedLine)
+            processedLine = checkForCorrections(deck, processedLine)
 
             // Find card count
             val cardCountResult = getCardCount(processedLine)
@@ -175,7 +176,7 @@ class DeckParse(
             processedLine = getProcessedCardName(processedLine, true).trim()
 
             // Check and correct common errors again without spaces
-            processedLine = checkForCorrections(processedLine)
+            processedLine = checkForCorrections(deck, processedLine)
 
             // Now check again with the processed card name for an exact match
             if (addIfExactMatch(deck, processedLine, count, isStarting)) {
@@ -226,11 +227,20 @@ class DeckParse(
         return null
     }
 
-    private fun checkForCorrections(cardLine: String): String {
+    private fun checkForCorrections(deck: SWCCGDeck, cardLine: String): String {
         var updatedLine = cardLine
 
-        corrections.forEach { correction ->
+        val generalCorrections = if (deck.isDark) darkGeneralCorrections else lightGeneralCorrections
+        val exactCorrections = if (deck.isDark) darkExactCorrections else lightExactCorrections
+
+        // general corrections just can match any part of the cardName
+        generalCorrections.forEach { correction ->
             updatedLine = updatedLine.replace(correction.key, correction.value)
+        }
+
+        // exact corrections must match the entire line exactly
+        exactCorrections.forEach { correction ->
+            updatedLine = if (updatedLine.equals(correction.key)) correction.value else updatedLine
         }
 
         return updatedLine
@@ -286,35 +296,20 @@ fun getCardCount(startingCardLine: String): Pair<String, Int> {
 
     // See if the line starts with #x
     numXStartRegex.find(cardLine)?.let { matchResult ->
-        val xIndex = cardLine.indexOf("x")
-        var countString = cardLine.substring(matchResult.range.start, xIndex)
-        count = countString.toInt()
+        count = cardLine.substring(matchResult.range.start, matchResult.range.endInclusive).trim().toInt()
         cardLine = cardLine.removeRange(matchResult.range)
     }
 
     // See if the line ends with " x#"
-    if (xNumEndRegex.containsMatchIn(cardLine)) {
-        val xIndex = cardLine.lastIndexOf(" x")
-        var countString = cardLine.substring(xIndex + 2)
-
-        var endDigitIndex = 1
-        while (endDigitIndex < countString.length && !countString[endDigitIndex - 1].isDigit()) {
-            endDigitIndex++
-        }
-
-        // CHOP off the end
-        countString = countString.substring(0, endDigitIndex).trim()
-
-        count = countString.toInt()
-        cardLine = cardLine.substring(0, xIndex)
+    xNumEndRegex.find(cardLine)?.let { matchResult ->
+        count = cardLine.substring(matchResult.range).substring(2).trim().toInt()
+        cardLine = cardLine.removeRange(matchResult.range)
     }
 
     // See if the line starts with #_CardName
     startingNumRegex.find(cardLine)?.let { matchResult ->
-        println("found # num: $cardLine")
         count = cardLine.substring(matchResult.range).trim().toInt()
         cardLine = cardLine.removeRange(matchResult.range)
-        println("$count after: $cardLine")
     }
 
     return Pair(cardLine, count)

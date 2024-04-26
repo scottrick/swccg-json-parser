@@ -25,6 +25,7 @@ data class SWCCGDeck(
     }
 
     fun print() {
+        println("--------------------------------")
         println("Deck: $title")
         println("Source: $source")
         println("Side: ${if (isDark) "Dark" else "Light"}")

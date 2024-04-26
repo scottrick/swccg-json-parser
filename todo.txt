@@ -1,0 +1,5 @@
+* How to handle cards with the same name?  IE which Boba Fett?
+
+* Pass context while parsing the card name:
+    Starting
+    Effect/Interrupt/Starship category?
