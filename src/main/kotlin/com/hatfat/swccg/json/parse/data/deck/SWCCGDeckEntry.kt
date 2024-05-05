@@ -4,5 +4,5 @@ data class SWCCGDeckEntry(
     val cardName: String,
     val count: Int,
     val isStarting: Boolean,
-    val cardId: String?,
+    val cardId: Int,
 )

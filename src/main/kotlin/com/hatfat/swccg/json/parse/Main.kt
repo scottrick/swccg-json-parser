@@ -21,13 +21,13 @@ fun main(args: Array<String>) {
 
 //    parseSets(gson)
 
-    val cards = getAllCards(gson)
+    val cards = getAllCards(gson, true)
 
     val deckParse = DeckParse("../decktech.net/_decks", cards)
     deckParse.parse()
 }
 
-fun getAllCards(gson: Gson): List<SWCCGCard> {
+fun getAllCards(gson: Gson, onlyDecipher: Boolean): List<SWCCGCard> {
     val lightCurrentInputStream = FileInputStream(File("output/Light.json"))
     val lightCurrentReader = BufferedReader(InputStreamReader(lightCurrentInputStream))
     val light = gson.fromJson(lightCurrentReader, SWCCGCardList::class.java)
@@ -36,19 +36,22 @@ fun getAllCards(gson: Gson): List<SWCCGCard> {
     val darkCurrentReader = BufferedReader(InputStreamReader(darkCurrentInputStream))
     val dark = gson.fromJson(darkCurrentReader, SWCCGCardList::class.java)
 
-    val lightLegacyInputStream = FileInputStream(File("output/LightLegacy.json"))
-    val lightLegacyReader = BufferedReader(InputStreamReader(lightLegacyInputStream))
-    val lightLegacy = gson.fromJson(lightLegacyReader, SWCCGCardList::class.java)
-
-    val darkLegacyInputStream = FileInputStream(File("output/DarkLegacy.json"))
-    val darkLegacyReader = BufferedReader(InputStreamReader(darkLegacyInputStream))
-    val darkLegacy = gson.fromJson(darkLegacyReader, SWCCGCardList::class.java)
-
     val cards = mutableListOf<SWCCGCard>()
     cards.addAll(light.cards)
     cards.addAll(dark.cards)
-    cards.addAll(lightLegacy.cards)
-    cards.addAll(darkLegacy.cards)
+
+    if (!onlyDecipher) {
+        val lightLegacyInputStream = FileInputStream(File("output/LightLegacy.json"))
+        val lightLegacyReader = BufferedReader(InputStreamReader(lightLegacyInputStream))
+        val lightLegacy = gson.fromJson(lightLegacyReader, SWCCGCardList::class.java)
+
+        val darkLegacyInputStream = FileInputStream(File("output/DarkLegacy.json"))
+        val darkLegacyReader = BufferedReader(InputStreamReader(darkLegacyInputStream))
+        val darkLegacy = gson.fromJson(darkLegacyReader, SWCCGCardList::class.java)
+
+        cards.addAll(lightLegacy.cards)
+        cards.addAll(darkLegacy.cards)
+    }
 
     return cards
 }
