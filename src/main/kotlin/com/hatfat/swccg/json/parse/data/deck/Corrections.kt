@@ -57,6 +57,7 @@ fun insertSharedGeneralCorrections(corrections: MutableMap<String, String>) {
     corrections["raltir"] = "ralltiir"
     corrections["ralltir"] = "ralltiir"
     corrections["raltiir"] = "ralltiir"
+    corrections["rallitir"] = "ralltiir"
     corrections["corelia"] = "corellia"
     corrections["correlia"] = "corellia"
     corrections["correllia"] = "corellia"
@@ -149,6 +150,11 @@ fun createLightExactCorrections(): Map<String, String> {
     corrections["dashrender"] = "dashrendar"
     corrections["wedgersl"] = "wedgeantillesredsquadronleader"
     corrections["elyhkrue"] = "elyhekrue"
+    corrections["boussh"] = "boushh"
+    corrections["xwinglasercannons"] = "xwinglasercannon"
+    corrections["naytaan"] = "lieutenantnaytaan"
+    corrections["brenquersy"] = "brenquersey"
+    corrections["holokland"] = "holokand"
 
     return corrections
 }
@@ -190,8 +196,21 @@ fun createLightWildcardCorrections(): Map<String, String> {
     corrections["ackbar"] = "admiralackbar"
     corrections["hobbie"] = "derekhobbieklivian"
     corrections["landoin"] = "landoinmillenniumfalcon"
+    corrections["kalfal"] = "kalfalnlcndros"
+    corrections["biggs"] = "biggsdarklighter"
+    corrections["lukerebelscout"] = "lukeskywalkerrebelscout"
+    corrections["ralfreighter"] = "ralltiirfreightercaptain"
+    corrections["hasshn"] = "majorhaashn"
 
     return corrections
+}
+
+fun createLightSplitCorrections(): Map<String, List<String>> {
+    val splits = mutableMapOf<String, List<String>>()
+
+    splits["red squadron 1 4 7"] = listOf("redsquadron1", "redsquadron4", "redsquadron7")
+
+    return splits
 }
 
 fun createDarkGeneralCorrections(): Map<String, String> {
@@ -351,4 +370,10 @@ fun createDarkWildcardCorrections(): Map<String, String> {
     corrections["controlandset"] = "controlsetforstun"
 
     return corrections
+}
+
+fun createDarkSplitCorrections(): Map<String, List<String>> {
+    val splits = mutableMapOf<String, List<String>>()
+
+    return splits
 }

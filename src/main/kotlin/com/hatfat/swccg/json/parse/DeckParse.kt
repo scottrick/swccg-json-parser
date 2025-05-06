@@ -23,34 +23,35 @@ class DeckParse(
     private val lightGeneralCorrections = createLightGeneralCorrections()
     private val lightExactCorrections = createLightExactCorrections()
     private val lightWildcardCorrections = createLightWildcardCorrections()
+    private val lightSplitCorrections = createLightSplitCorrections()
     private val darkGeneralCorrections = createDarkGeneralCorrections()
     private val darkExactCorrections = createDarkExactCorrections()
     private val darkWildcardCorrections = createDarkWildcardCorrections()
+    private val darkSplitCorrections = createDarkSplitCorrections()
 
     fun parse() {
         println("DeckTech Parse")
         println("${allCards.size} cards loaded")
 
         var currentDeckNum = 0
-        val deckToParse = 27
+        val deckToParse = 28
         val parseSingleDeck = false
 
         val decks = mutableListOf<SWCCGDeck>()
 
-        val dir =
-            File(directory).walkTopDown().forEach { file ->
-                if (file.extension == "md" && decks.size < 100) {
-                    if (checkForRedFlags(file, false)) {
-                        // skipping due to red flags
-                    } else {
-                        if (!parseSingleDeck || currentDeckNum == deckToParse) {
-                            decks.add(parseFile(file))
-                        }
-
-                        currentDeckNum++
+        File(directory).walkTopDown().forEach { file ->
+            if (file.extension == "md" && decks.size < 100) {
+                if (checkForRedFlags(file, false)) {
+                    // skipping due to red flags
+                } else {
+                    if (!parseSingleDeck || currentDeckNum == deckToParse) {
+                        decks.add(parseFile(file))
                     }
+
+                    currentDeckNum++
                 }
             }
+        }
 
         // First 100 decks
         // Counted 4446 cards
@@ -206,38 +207,42 @@ class DeckParse(
                 continue
             }
 
-            // Find card count
-            val cardCountResult = getCardCount(processedLine)
-            processedLine = cardCountResult.first.trim()
-            val count = cardCountResult.second
+            // check for multiple cards on the same line
+            val splitLines = checkForCardSplits(deck, processedLine)
 
-            // Check and correct common errors
-            processedLine = checkForCorrections(deck, processedLine, false)
+            for (splitLine in splitLines) {
+                // Find card count
+                val cardCountResult = getCardCount(splitLine)
+                processedLine = cardCountResult.first.trim()
+                val count = cardCountResult.second
 
-            // Find is starting card
-            val startingCardResult = getIsStartingCard(processedLine)
-            processedLine = startingCardResult.first.trim()
-            val isStarting = startingCardResult.second
+                // Check and correct common errors
+                processedLine = checkForCorrections(deck, processedLine, false)
 
-            processedLine = getProcessedCardName(processedLine, true).trim()
+                // Find is starting card
+                val startingCardResult = getIsStartingCard(processedLine)
+                processedLine = startingCardResult.first.trim()
+                val isStarting = startingCardResult.second
 
-            // Check and correct common errors again without spaces
-            processedLine = checkForCorrections(deck, processedLine, true)
+                processedLine = getProcessedCardName(processedLine, true).trim()
 
-            // Now check again with the processed card name for an exact match
-            if (addIfExactMatch(deck, processedLine, count, isStarting)) {
-                continue
-            }
+                // Check and correct common errors again without spaces
+                processedLine = checkForCorrections(deck, processedLine, true)
 
+                // Now check again with the processed card name for an exact match
+                if (addIfExactMatch(deck, processedLine, count, isStarting)) {
+                    continue
+                }
 
-            // Still no match?  Check if this line has two cards next to each other
-            if (checkForTwoCards(deck, processedLine, count, isStarting)) {
-                continue
-            }
+                // Still no match?  Check if this line has two cards next to each other
+                if (checkForTwoCards(deck, processedLine, count, isStarting)) {
+                    continue
+                }
 
-            unmatchedLines.add(processedLine)
-            if (verbose) {
-                println("NO MATCH: $processedLine")
+                unmatchedLines.add(processedLine)
+                if (verbose) {
+                    println("NO MATCH: $processedLine")
+                }
             }
         }
     }
@@ -285,6 +290,7 @@ class DeckParse(
                 addIfExactMatch(deck, secondCardLine, 1, isStarting)
 
                 println("CHECKING FOR TWO CARDS, FOUND SINGLE MATCH FOR BOTH:")
+                println("  $cardLine")
                 println("  1st: $firstCardLine")
                 println("  2nd: $secondCardLine")
                 return true
@@ -307,6 +313,14 @@ class DeckParse(
         }
 
         return null
+    }
+
+    // Check if the line should be split into multiple card lines
+    private fun checkForCardSplits(deck: SWCCGDeck, cardLine: String): List<String> {
+        // IE, Red Squadron 1, 4, 7 -> three cards
+        val splitCorrections = if (deck.isDark) darkSplitCorrections else lightSplitCorrections
+
+        return splitCorrections[cardLine] ?: listOf(cardLine)
     }
 
     private fun checkForCorrections(deck: SWCCGDeck, cardLine: String, includeWildcard: Boolean): String {
@@ -372,8 +386,6 @@ class DeckParse(
 
 // Gets starting, and removes starting from string.
 fun getIsStartingCard(cardName: String): Pair<String, Boolean> {
-//    val processedCardName = cardName
-
     return Pair(cardName, false)
 }
 
