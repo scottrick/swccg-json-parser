@@ -34,8 +34,8 @@ class DeckParse(
         println("${allCards.size} cards loaded")
 
         var currentDeckNum = 0
-        val deckToParse = 28
-        val parseSingleDeck = false
+        val deckToParse = 39
+        val parseSingleDeck = true
 
         val decks = mutableListOf<SWCCGDeck>()
 
@@ -61,7 +61,8 @@ class DeckParse(
         // 4580, (16 decks)
         // 4700, (21 decks)
         // 4842, (24 decks)
-        // 5000, (27 decks)
+        // 5115, (30 decks)
+        // 5327, (37 decks)
 
         println("---------------------------------------")
         println("Finished!  Parsed ${decks.size} decks.")
@@ -212,9 +213,9 @@ class DeckParse(
 
             for (splitLine in splitLines) {
                 // Find card count
-                val cardCountResult = getCardCount(splitLine)
+                var cardCountResult = getCardCount(splitLine, false)
                 processedLine = cardCountResult.first.trim()
-                val count = cardCountResult.second
+                var count = cardCountResult.second
 
                 // Check and correct common errors
                 processedLine = checkForCorrections(deck, processedLine, false)
@@ -236,6 +237,19 @@ class DeckParse(
 
                 // Still no match?  Check if this line has two cards next to each other
                 if (checkForTwoCards(deck, processedLine, count, isStarting)) {
+                    continue
+                }
+
+                if (count == 1) {
+                    // try finding count again, with extra searches
+                    cardCountResult = getCardCount(processedLine, true)
+                    processedLine = cardCountResult.first.trim()
+                    count = cardCountResult.second
+                }
+
+                // Now check again with the processed card name for an exact match
+                if (addIfExactMatch(deck, processedLine, count, isStarting)) {
+                    println("found it after special card processin...")
                     continue
                 }
 
@@ -360,7 +374,8 @@ class DeckParse(
             // Ignore virtual cards for now
             var set = 0
             set = if (card.set?.contains("d") == true) {
-                0
+                // Virtual Defensive Shields
+                200
             } else {
                 card.set?.toInt() ?: 0
             }
@@ -390,14 +405,15 @@ fun getIsStartingCard(cardName: String): Pair<String, Boolean> {
 }
 
 // Gets card count, and removes card count from string.
-fun getCardCount(startingCardLine: String): Pair<String, Int> {
+fun getCardCount(startingCardLine: String, extraSearches: Boolean): Pair<String, Int> {
     var count = 1
     var cardLine = startingCardLine
 
     val numXStartRegex = Regex("\\d+x")
-    val xNumEndRegex = Regex("\\b *x\\d+")
+    val xNumEndRegex = Regex("\\b *x *\\d+")
     val xNumParenEndRegex = Regex("\\b *\\(*x\\d+")
     val startingNumRegex = Regex("^\\d+ *\\b")
+    val endingNumRegex = Regex("\\B\\D *\\d$")
 
     // See if the line starts with #x
     numXStartRegex.find(cardLine)?.let { matchResult ->
@@ -421,6 +437,14 @@ fun getCardCount(startingCardLine: String): Pair<String, Int> {
     startingNumRegex.find(cardLine)?.let { matchResult ->
         count = cardLine.substring(matchResult.range).trim().toInt()
         cardLine = cardLine.removeRange(matchResult.range)
+    }
+
+    if (extraSearches) {
+        // See if the line ends with CardName_#
+        endingNumRegex.find(cardLine)?.let { matchResult ->
+            count = cardLine.substring(matchResult.range).trim().substring(1).toInt()
+            cardLine = cardLine.substring(0, matchResult.range.start + 1)
+        }
     }
 
     return Pair(cardLine, count)
