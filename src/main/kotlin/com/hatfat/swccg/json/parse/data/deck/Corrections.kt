@@ -4,6 +4,7 @@ fun createRedFlagList(): List<String> {
     val redFlags = mutableListOf<String>()
 
     redFlags.add("boob")
+    redFlags.add("boobies")
 
     // Legends of the Five Rings decklist...
     redFlags.add("egg of pan ku")

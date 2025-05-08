@@ -35,7 +35,8 @@ class DeckParse(
 
         var currentDeckNum = 0
         val deckToParse = 39
-        val parseSingleDeck = true
+        val parseSingleDeck = false
+        val verbose = true
 
         val decks = mutableListOf<SWCCGDeck>()
 
@@ -45,7 +46,7 @@ class DeckParse(
                     // skipping due to red flags
                 } else {
                     if (!parseSingleDeck || currentDeckNum == deckToParse) {
-                        decks.add(parseFile(file))
+                        decks.add(parseFile(file, verbose))
                     }
 
                     currentDeckNum++
@@ -68,8 +69,10 @@ class DeckParse(
         println("Finished!  Parsed ${decks.size} decks.")
         println("Total cards counted: ${decks.sumBy { it.cardCount() }}")
         println("---------------------------------------")
-        printDeckCountSummaries(decks, 10)
-        println("---------------------------------------")
+        if (verbose && !parseSingleDeck) {
+            printDeckCountSummaries(decks, 10)
+            println("---------------------------------------")
+        }
 
         if (!parseSingleDeck) {
             for (index in expectedDeckCounts.indices) {
@@ -86,7 +89,7 @@ class DeckParse(
     private fun checkForRedFlags(deckFile: File, verbose: Boolean): Boolean {
         for (line in deckFile.bufferedReader().lines()) {
             for (redFlag in redFlagList) {
-                if (line.contains(redFlag)) {
+                if (line.contains(redFlag, true)) {
                     if (verbose) {
                         println("RedFlag in ${deckFile.name}")
                         println(" > $line")
@@ -100,7 +103,7 @@ class DeckParse(
         return false
     }
 
-    private fun parseFile(deckFile: File): SWCCGDeck {
+    private fun parseFile(deckFile: File, verbose: Boolean): SWCCGDeck {
 //        ---
 //        layout: deck
 //        author: ! Mike "Iceman" Fitzgerald
@@ -126,6 +129,7 @@ class DeckParse(
         lines = lines.drop(1)
 
         val deck = SWCCGDeck.create()
+        println("${deckFile.canonicalFile.absolutePath}")
 
         deck.source = deckFile.name
         deck.debugSource = deckFile.canonicalFile.absolutePath
@@ -147,10 +151,11 @@ class DeckParse(
 
         val cardLines = lines.subList(0, strategyIndex)
 
-        val verbose = true
         parseCards(deck, cardLines, verbose)
 
-        deck.print(verbose)
+        if (verbose) {
+            deck.print(true)
+        }
 
         return deck
     }
@@ -236,7 +241,7 @@ class DeckParse(
                 }
 
                 // Still no match?  Check if this line has two cards next to each other
-                if (checkForTwoCards(deck, processedLine, count, isStarting)) {
+                if (checkForTwoCards(deck, processedLine, isStarting, verbose)) {
                     continue
                 }
 
@@ -249,7 +254,6 @@ class DeckParse(
 
                 // Now check again with the processed card name for an exact match
                 if (addIfExactMatch(deck, processedLine, count, isStarting)) {
-                    println("found it after special card processin...")
                     continue
                 }
 
@@ -284,7 +288,7 @@ class DeckParse(
         return false
     }
 
-    private fun checkForTwoCards(deck: SWCCGDeck, cardLine: String, count: Int, isStarting: Boolean): Boolean {
+    private fun checkForTwoCards(deck: SWCCGDeck, cardLine: String, isStarting: Boolean, verbose: Boolean): Boolean {
         val cardNames = if (deck.isDark) darkCardNames else lightCardNames
 
         val result = cardNames.filter {
@@ -303,10 +307,13 @@ class DeckParse(
                 addIfExactMatch(deck, firstCardLine, 1, isStarting)
                 addIfExactMatch(deck, secondCardLine, 1, isStarting)
 
-                println("CHECKING FOR TWO CARDS, FOUND SINGLE MATCH FOR BOTH:")
-                println("  $cardLine")
-                println("  1st: $firstCardLine")
-                println("  2nd: $secondCardLine")
+                if (verbose) {
+                    println("CHECKING FOR TWO CARDS, FOUND SINGLE MATCH FOR BOTH:")
+                    println("  $cardLine")
+                    println("  1st: $firstCardLine")
+                    println("  2nd: $secondCardLine")
+                }
+
                 return true
             }
         }
@@ -424,7 +431,7 @@ fun getCardCount(startingCardLine: String, extraSearches: Boolean): Pair<String,
     // See if the line ends with " x#"
     xNumEndRegex.find(cardLine)?.let { matchResult ->
         count = cardLine.substring(matchResult.range).trim().substring(1).trim().toInt()
-        cardLine = cardLine.removeRange(matchResult.range)
+        cardLine = cardLine.substring(0, matchResult.range.first)
     }
 
     // See if the line ends with " (x#"
@@ -563,4 +570,3 @@ private fun printDeckPercentSummaries(decks: List<SWCCGDeck>, numPerLine: Int) {
         println(line)
     }
 }
-
