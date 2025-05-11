@@ -14,6 +14,8 @@ class DeckParse(
     private var processedDarkCards = HashMap<String, SWCCGCard>()
     private var processedLightCards = HashMap<String, SWCCGCard>()
 
+    private val hexHtmlRegEx = Regex("&#\\d*;")
+
     init {
         processCardNames(allCards)
     }
@@ -34,19 +36,19 @@ class DeckParse(
         println("${allCards.size} cards loaded")
 
         var currentDeckNum = 0
-        val deckToParse = 39
+        val deckToParse = 446
         val parseSingleDeck = false
         val verbose = true
 
         val decks = mutableListOf<SWCCGDeck>()
 
         File(directory).walkTopDown().forEach { file ->
-            if (file.extension == "md" && decks.size < 100) {
+            if (file.extension == "md" && decks.size < 1000) {
                 if (checkForRedFlags(file, false)) {
                     // skipping due to red flags
                 } else {
                     if (!parseSingleDeck || currentDeckNum == deckToParse) {
-                        decks.add(parseFile(file, verbose))
+                        decks.add(parseFile(file, verbose && parseSingleDeck))
                     }
 
                     currentDeckNum++
@@ -63,7 +65,7 @@ class DeckParse(
         // 4700, (21 decks)
         // 4842, (24 decks)
         // 5115, (30 decks)
-        // 5327, (37 decks)
+        // 5269, (40 decks)
 
         println("---------------------------------------")
         println("Finished!  Parsed ${decks.size} decks.")
@@ -91,8 +93,8 @@ class DeckParse(
             for (redFlag in redFlagList) {
                 if (line.contains(redFlag, true)) {
                     if (verbose) {
-                        println("RedFlag in ${deckFile.name}")
-                        println(" > $line")
+                        println("file: ${deckFile.canonicalFile.absolutePath}")
+                        println("RedFlag > $line")
                     }
 
                     return true
@@ -119,7 +121,14 @@ class DeckParse(
         val mutableLines = mutableListOf<String>()
 
         deckFile.bufferedReader().forEachLine { line ->
-            mutableLines.add(line)
+            // filter out random HTML hex codes
+            var filteredLine = line
+
+            hexHtmlRegEx.find(filteredLine)?.let { matchResult ->
+                filteredLine = filteredLine.removeRange(matchResult.range)
+            }
+
+            mutableLines.add(filteredLine)
 //            println(line)
         }
 
@@ -129,7 +138,6 @@ class DeckParse(
         lines = lines.drop(1)
 
         val deck = SWCCGDeck.create()
-        println("${deckFile.canonicalFile.absolutePath}")
 
         deck.source = deckFile.name
         deck.debugSource = deckFile.canonicalFile.absolutePath
@@ -144,7 +152,7 @@ class DeckParse(
         // Find start of strategy section
         val strategyLine =
             lines.find { line ->
-                line.contains("Strategy:")
+                line.trim().startsWith("strategy", true)
             }
         val strategyIndex = lines.indexOf(strategyLine)
         assert(strategyIndex != -1)
@@ -416,34 +424,95 @@ fun getCardCount(startingCardLine: String, extraSearches: Boolean): Pair<String,
     var count = 1
     var cardLine = startingCardLine
 
-    val numXStartRegex = Regex("\\d+x")
-    val xNumEndRegex = Regex("\\b *x *\\d+")
-    val xNumParenEndRegex = Regex("\\b *\\(*x\\d+")
+    val numXStartRegex = Regex("^\\d+ *x")
+    val xNumStartRegex = Regex("^x *\\d+ ")
+    val xNumEndRegexNoSpace = Regex("\\Sx *\\d+")
+    val xNumEndRegexWithSpace = Regex("\\S x *\\d+")
+    val xNumParenEndRegex = Regex("\\b *\\(\\d+")
     val startingNumRegex = Regex("^\\d+ *\\b")
     val endingNumRegex = Regex("\\B\\D *\\d$")
+
+    val debug = false
+    if (debug) {
+        println("cardline: $cardLine")
+    }
 
     // See if the line starts with #x
     numXStartRegex.find(cardLine)?.let { matchResult ->
         count = cardLine.substring(matchResult.range.start, matchResult.range.endInclusive).trim().toInt()
         cardLine = cardLine.removeRange(matchResult.range)
+
+        if (debug) {
+            println("count(1): $count")
+            println("cardline: $cardLine")
+        }
+
+        return Pair(cardLine, count)
+    }
+
+    // See if the line starts with #x
+    xNumStartRegex.find(cardLine)?.let { matchResult ->
+        count = cardLine.substring(matchResult.range.start + 1, matchResult.range.endInclusive).trim().toInt()
+        cardLine = cardLine.removeRange(matchResult.range)
+
+        if (debug) {
+            println("count(7): $count")
+            println("cardline: $cardLine")
+        }
+
+        return Pair(cardLine, count)
     }
 
     // See if the line ends with " x#"
-    xNumEndRegex.find(cardLine)?.let { matchResult ->
-        count = cardLine.substring(matchResult.range).trim().substring(1).trim().toInt()
-        cardLine = cardLine.substring(0, matchResult.range.first)
+    xNumEndRegexWithSpace.find(cardLine)?.let { matchResult ->
+        count = cardLine.substring(matchResult.range).trim().substring(3).trim().toInt()
+        cardLine = cardLine.substring(0, matchResult.range.first + 1)
+
+        if (debug) {
+            println("count(2): $count")
+            println("cardline: $cardLine")
+        }
+
+        return Pair(cardLine, count)
     }
 
-    // See if the line ends with " (x#"
-    xNumParenEndRegex.find(cardLine)?.let { matchResult ->
+    // See if the line ends with "x#"
+    xNumEndRegexNoSpace.find(cardLine)?.let { matchResult ->
         count = cardLine.substring(matchResult.range).trim().substring(2).trim().toInt()
         cardLine = cardLine.substring(0, matchResult.range.first)
+
+        if (debug) {
+            println("count(3): $count")
+            println("cardline: $cardLine")
+        }
+
+        return Pair(cardLine, count)
+    }
+
+    // See if the line ends with " (x"
+    xNumParenEndRegex.find(cardLine)?.let { matchResult ->
+        count = cardLine.substring(matchResult.range).trim().substring(1).trim().toInt()
+        cardLine = cardLine.substring(0, matchResult.range.first)
+
+        if (debug) {
+            println("count(4): $count")
+            println("cardline: $cardLine")
+        }
+
+        return Pair(cardLine, count)
     }
 
     // See if the line starts with #_CardName
     startingNumRegex.find(cardLine)?.let { matchResult ->
         count = cardLine.substring(matchResult.range).trim().toInt()
         cardLine = cardLine.removeRange(matchResult.range)
+
+        if (debug) {
+            println("count(5): $count")
+            println("cardline: $cardLine")
+        }
+
+        return Pair(cardLine, count)
     }
 
     if (extraSearches) {
@@ -451,6 +520,13 @@ fun getCardCount(startingCardLine: String, extraSearches: Boolean): Pair<String,
         endingNumRegex.find(cardLine)?.let { matchResult ->
             count = cardLine.substring(matchResult.range).trim().substring(1).toInt()
             cardLine = cardLine.substring(0, matchResult.range.start + 1)
+
+            if (debug) {
+                println("count(6): $count")
+                println("cardline: $cardLine")
+            }
+
+            return Pair(cardLine, count)
         }
     }
 
@@ -519,8 +595,11 @@ private fun printDeckCountSummaries(decks: List<SWCCGDeck>, numPerLine: Int) {
             if (index < decks.size) {
                 val countValue = decks[index].cardCount()
 
-                if (countValue > 100) {
-                    println("EXTRA LARGE DECK: ${decks[index].debugSource}")
+                if (countValue > 80) {
+                    println("$index] LARGE DECK: ${decks[index].debugSource}")
+                }
+                if (countValue <= 9) {
+                    println("$index] TINY DECK: ${decks[index].debugSource}")
                 }
 
                 if (column != 0) {

@@ -21,7 +21,7 @@ data class SWCCGDeck(
         cards.find { it.cardId == entry.cardId }?.let {
             if (it.count == entry.count) {
                 // entry was already in the list, so ignore the duplicate!
-                println("entry: $entry already found!!!")
+//                println("entry: $entry already found!!!")
                 return
             }
         }
