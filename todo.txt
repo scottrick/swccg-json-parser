@@ -1,6 +1,3 @@
-* FIX all the TINY / LARGE deck warnings!
-
-
 * i think we need to get rid of all the wild cards altogether
 * when we return the failed line, we return the failure before fancy card count
 * highlight cards that have copies greater than 60?  30?

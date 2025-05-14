@@ -1,8 +1,10 @@
 package com.hatfat.swccg.json.parse
 
 import com.hatfat.swccg.json.parse.count.CardCount
+import com.hatfat.swccg.json.parse.count.UnmatchedRegistry
 import com.hatfat.swccg.json.parse.data.SWCCGCard
 import com.hatfat.swccg.json.parse.data.deck.*
+import com.hatfat.swccg.json.parse.data.deck.corrections.*
 import java.io.File
 import java.text.DecimalFormat
 
@@ -32,23 +34,27 @@ class DeckParse(
     private val darkWildcardCorrections = createDarkWildcardCorrections()
     private val darkSplitCorrections = createDarkSplitCorrections()
 
-    private val ignoreFilters = createIgnoreFilters()
+    private val ignoreWildcardFilters = createIgnoreWildcardFilters()
+    private val ignoreStartsWithFilters = createIgnoreStartsWithFilters()
+    private val ignoreExactFilters = createIgnoreExactFilters()
 
     private val cardCount = CardCount()
+    private val unmatched = UnmatchedRegistry()
 
     fun parse() {
         println("DeckTech Parse")
         println("${allCards.size} cards loaded")
 
         var currentDeckNum = 0
-        val deckToParse = 530
-        val parseSingleDeck = true
-        val verbose = true
+        val deckToParse = 39
+        val parseSingleDeck = false
+        val verbose = false
+        val validate = false
 
         val decks = mutableListOf<SWCCGDeck>()
 
         File(directory).walkTopDown().forEach { file ->
-            if (file.extension == "md" && decks.size < 1000) {
+            if (file.extension == "md" && decks.size < 10000) {
                 if (checkForRedFlags(file, false)) {
                     // skipping due to red flags
                 } else {
@@ -71,7 +77,8 @@ class DeckParse(
         // 4842, (24 decks)
         // 5115, (30 decks)
         // 5269, (40 decks)
-        // 5343, (40 decks), after refactoring card count functionality
+        // 5362, (40 decks), after refactoring card count functionality
+        // 5135, after removing all wildcards
 
         println("---------------------------------------")
         println("Finished!  Parsed ${decks.size} decks.")
@@ -82,7 +89,7 @@ class DeckParse(
             println("---------------------------------------")
         }
 
-        if (!parseSingleDeck) {
+        if (!parseSingleDeck && validate) {
             for (index in expectedDeckCounts.indices) {
                 val deck = decks[index]
 
@@ -91,6 +98,8 @@ class DeckParse(
                 }
             }
         }
+
+        unmatched.printSummary(true)
     }
 
     // Filter out any decks that contain red flag words
@@ -213,16 +222,14 @@ class DeckParse(
         assert(rawLines[1] == "")
         val lines = rawLines.drop(2)
 
-        val unmatchedLines = mutableListOf<String>()
-
         for (line in lines) {
             val processedLineWithSpaces = getProcessedCardName(line, false).trim()
 
-            if (line.trim().isBlank() || line.trim().isEmpty() || line == "'") {
+            if (line.trim().isBlank() || line.trim().isEmpty() || line.trim() == "'" || line == "'") {
                 continue
             }
 
-            if (shouldIgnoreLine(line)) {
+            if (shouldIgnoreLine(line, processedLineWithSpaces)) {
                 continue
             }
 
@@ -269,11 +276,11 @@ class DeckParse(
                     continue
                 }
 
-                // still nothing, we will try again but with wildcard corrections
-                processedLine = checkForCorrections(deck, processedLine, true)
-                if (addIfExactMatch(deck, processedLine, count, false)) {
-                    continue
-                }
+//                // still nothing, we will try again but with wildcard corrections
+//                processedLine = checkForCorrections(deck, processedLine, true)
+//                if (addIfExactMatch(deck, processedLine, count, false)) {
+//                    continue
+//                }
 
                 // Find card count with more relaxed extra searches, if the first search failed
                 if (!cardCountSucceeded) {
@@ -293,14 +300,14 @@ class DeckParse(
                             continue
                         }
 
-                        processedLine = checkForCorrections(deck, processedLine, true)
-                        if (addIfExactMatch(deck, processedLine, count, false)) {
-                            continue
-                        }
+//                        processedLine = checkForCorrections(deck, processedLine, true)
+//                        if (addIfExactMatch(deck, processedLine, count, false)) {
+//                            continue
+//                        }
                     }
                 }
 
-                unmatchedLines.add(processedLine)
+                unmatched.registerUnmatchedLine(line, deck.debugSource)
                 if (verbose) {
                     println("NO MATCH: $processedLine")
                 }
@@ -447,9 +454,21 @@ class DeckParse(
         this.processedLightCards = processedLightCardNames
     }
 
-    fun shouldIgnoreLine(line: String): Boolean {
-        for (filter in ignoreFilters) {
+    fun shouldIgnoreLine(line: String, processedLineWithSpaces: String): Boolean {
+        for (filter in ignoreWildcardFilters) {
             if (line.contains(filter, true)) {
+                return true
+            }
+        }
+
+        for (filter in ignoreExactFilters) {
+            if (processedLineWithSpaces.equals(filter, true)) {
+                return true
+            }
+        }
+
+        for (filter in ignoreStartsWithFilters) {
+            if (processedLineWithSpaces.startsWith(filter, true)) {
                 return true
             }
         }
@@ -486,6 +505,8 @@ fun getProcessedCardName(
     stringsToRemove.add(">")
     stringsToRemove.add("#")
     stringsToRemove.add("8217")
+    stringsToRemove.add("[")
+    stringsToRemove.add("]")
 
     if (shouldRemoveSpacesAndParens) {
         stringsToRemove.add(" ")
