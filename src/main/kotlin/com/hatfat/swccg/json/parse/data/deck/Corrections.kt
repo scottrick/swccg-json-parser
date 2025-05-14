@@ -16,6 +16,7 @@ fun createRedFlagList(): List<String> {
 }
 
 fun insertSharedGeneralCorrections(corrections: MutableMap<String, String>) {
+    corrections["assualt"] = "assault"
     corrections["bargin"] = "bargain"
     corrections["gaurd"] = "guard"
     corrections["mercanary"] = "mercenary"
@@ -58,11 +59,9 @@ fun insertSharedGeneralCorrections(corrections: MutableMap<String, String>) {
     corrections["vibroaxe"] = "vibroax"
     corrections["enforcment"] = "enforcement"
     corrections["tatjabba"] = "tatooinejabba"
-    corrections["tatooinedb"] = "tatooinedockingbay94"
     corrections["cmdr"] = "commander"
     corrections["intrudermissle"] = "intrudermissile"
     corrections["kashyyk"] = "kashyyyk"
-    corrections["tatdb"] = "tatooinedockingbay94"
     corrections["tatcantina"] = "tatooinecantina"
     corrections["raltir"] = "ralltiir"
     corrections["ralltir"] = "ralltiir"
@@ -79,6 +78,11 @@ fun insertSharedGeneralCorrections(corrections: MutableMap<String, String>) {
 fun insertSharedExactCorrections(corrections: MutableMap<String, String>) {
     corrections["dockingbay"] = "spaceportdockingbay"
     corrections["tatooinedockingbay"] = "tatooinedockingbay94"
+    corrections["tatooinedb"] = "tatooinedockingbay94"
+    corrections["tatooinedb94"] = "tatooinedockingbay94"
+    corrections["dockingbay94"] = "tatooinedockingbay94"
+    corrections["tatdb"] = "tatooinedockingbay94"
+    corrections["tatdb94"] = "tatooinedockingbay94"
 }
 
 fun createLightGeneralCorrections(): Map<String, String> {
@@ -122,6 +126,7 @@ fun createLightExactCorrections(): Map<String, String> {
     corrections["wiseadvicedoordonot"] = "doordonotwiseadvice"
     corrections["hanwithgun"] = "hanwithheavyblasterpistol"
     corrections["hanwithblaster"] = "hanwithheavyblasterpistol"
+    corrections["hanwhbp"] = "hanwithheavyblasterpistol"
     corrections["eppluke"] = "lukewithlightsaber"
     corrections["eppleia"] = "leiawithblasterrifle"
     corrections["eppobi"] = "obiwanwithlightsaber"
@@ -135,6 +140,7 @@ fun createLightExactCorrections(): Map<String, String> {
     corrections["lukejedi"] = "lukeskywalkerjediknight"
     corrections["lsjk"] = "lukeskywalkerjediknight"
     corrections["lukeskywalkerrs"] = "lukeskywalkerrebelscout"
+    corrections["lukerebelscout"] = "lukeskywalkerrebelscout"
     corrections["lukescout"] = "lukeskywalkerrebelscout"
     corrections["lsrs"] = "lukeskywalkerrebelscout"
     corrections["uncleandauntlars"] = "owenlarsberulars"
@@ -174,6 +180,7 @@ fun createLightExactCorrections(): Map<String, String> {
     corrections["brenquersy"] = "brenquersey"
     corrections["holokland"] = "holokand"
     corrections["cloudcitydockingbay"] = "cloudcityplatform327"
+    corrections["cloudcitydockingbay327"] = "cloudcityplatform327"
     corrections["yodashut"] = "dagobahyodashut"
     corrections["anakinsstick"] = "anakinslightsaber"
     corrections["obisstick"] = "obiwanslightsaber"
@@ -197,7 +204,6 @@ fun createLightWildcardCorrections(): Map<String, String> {
     corrections["agentsin"] = "agentsinthecourtnolovefortheempire"
     corrections["watchyourstep"] = "watchyourstepthisplacecanbealittlerough"
     corrections["wys"] = "watchyourstepthisplacecanbealittlerough"
-    corrections["94"] = "tatooinedockingbay94"
     corrections["capthan"] = "captainhansolo"
     corrections["capnhan"] = "captainhansolo"
     corrections["captainhan"] = "captainhansolo"
@@ -215,7 +221,6 @@ fun createLightWildcardCorrections(): Map<String, String> {
     corrections["ooctt"] = "outofcommissiontransmissionterminated"
     corrections["skate"] = "pulsarskate"
     corrections["mirax"] = "miraxterrik"
-    corrections["hanw"] = "hanwithheavyblasterpistol"
     corrections["ralltiircaptain"] = "ralltiirfreightercaptain"
     corrections["rfc"] = "ralltiirfreightercaptain"
     corrections["ecclando"] = "landowithblasterpistol"
@@ -330,6 +335,9 @@ fun createDarkExactCorrections(): Map<String, String> {
     corrections["impbarrier"] = "imperialbarrier"
     corrections["ddb"] = "deathstardockingbay327"
     corrections["dsbookingarea"] = "deathstardockingbay327"
+    corrections["dockingbay327"] = "deathstardockingbay327"
+    corrections["deathstardockingbay"] = "deathstardockingbay327"
+    corrections["deathstardb"] = "deathstardockingbay327"
     corrections["dssolitary"] = "deathstardetentionblockcorridor"
     corrections["ccdb"] = "cloudcityeastplatform"
     corrections["hdadtj"] = "huntdownanddestroythejeditheirfirehasgoneoutoftheuniverse"
@@ -446,8 +454,6 @@ fun createDarkWildcardCorrections(): Map<String, String> {
     corrections["emperorshand"] = "marajadetheemperorshand"
     corrections["cloudcitydockingbay"] = "cloudcityeastplatform"
     corrections["cloudcitydb"] = "cloudcityeastplatform"
-    corrections["deathstardockingbay"] = "deathstardockingbay327"
-    corrections["deathstardb"] = "deathstardockingbay327"
     corrections["executordb"] = "executordockingbay"
     corrections["coruscantdb"] = "coruscantdockingbay"
     corrections["d2db"] = "deathstariidockingbay"
@@ -465,6 +471,9 @@ fun createDarkWildcardCorrections(): Map<String, String> {
 
 fun createDarkSplitCorrections(): Map<String, List<String>> {
     val splits = mutableMapOf<String, List<String>>()
+
+    splits["saber 1 2 3 4"] = listOf("saber1", "saber2", "saber3", "saber4")
+    splits["tempest scout 1 2 5 6"] = listOf("tempestscout1", "tempestscout2", "tempestscout5", "tempestscout6")
 
     return splits
 }

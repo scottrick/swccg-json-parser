@@ -1,5 +1,6 @@
 package com.hatfat.swccg.json.parse
 
+import com.hatfat.swccg.json.parse.count.CardCount
 import com.hatfat.swccg.json.parse.data.SWCCGCard
 import com.hatfat.swccg.json.parse.data.deck.*
 import java.io.File
@@ -31,13 +32,17 @@ class DeckParse(
     private val darkWildcardCorrections = createDarkWildcardCorrections()
     private val darkSplitCorrections = createDarkSplitCorrections()
 
+    private val ignoreFilters = createIgnoreFilters()
+
+    private val cardCount = CardCount()
+
     fun parse() {
         println("DeckTech Parse")
         println("${allCards.size} cards loaded")
 
         var currentDeckNum = 0
-        val deckToParse = 446
-        val parseSingleDeck = false
+        val deckToParse = 530
+        val parseSingleDeck = true
         val verbose = true
 
         val decks = mutableListOf<SWCCGDeck>()
@@ -66,13 +71,14 @@ class DeckParse(
         // 4842, (24 decks)
         // 5115, (30 decks)
         // 5269, (40 decks)
+        // 5343, (40 decks), after refactoring card count functionality
 
         println("---------------------------------------")
         println("Finished!  Parsed ${decks.size} decks.")
         println("Total cards counted: ${decks.sumBy { it.cardCount() }}")
         println("---------------------------------------")
         if (verbose && !parseSingleDeck) {
-            printDeckCountSummaries(decks, 10)
+            printDeckCountSummaries(decks, 40)
             println("---------------------------------------")
         }
 
@@ -190,7 +196,7 @@ class DeckParse(
             }
 
             if (processedLine.startsWith("side:")) {
-                val sideLine = processedLine.substring(5).trim().toLowerCase()
+                val sideLine = processedLine.substring(5).trim().lowercase()
                 if (sideLine == "light" || sideLine == "ls") {
                     deck.isDark = false
                 }
@@ -210,59 +216,88 @@ class DeckParse(
         val unmatchedLines = mutableListOf<String>()
 
         for (line in lines) {
-            var processedLine = getProcessedCardName(line, false).trim()
+            val processedLineWithSpaces = getProcessedCardName(line, false).trim()
 
             if (line.trim().isBlank() || line.trim().isEmpty() || line == "'") {
                 continue
             }
 
+            if (shouldIgnoreLine(line)) {
+                continue
+            }
+
             // Before any fancy processing, if the card matches, add it straight away
-            if (addIfExactMatch(deck, processedLine, 1, false)) {
+            if (addIfExactMatch(deck, processedLineWithSpaces, 1, false)) {
                 continue
             }
 
             // check for multiple cards on the same line
-            val splitLines = checkForCardSplits(deck, processedLine)
+            val splitLines = checkForCardSplits(deck, processedLineWithSpaces)
 
             for (splitLine in splitLines) {
+                var processedLine = splitLine
+                var count = 1
+                var cardCountSucceeded = false
+
                 // Find card count
-                var cardCountResult = getCardCount(splitLine, false)
-                processedLine = cardCountResult.first.trim()
-                var count = cardCountResult.second
+                cardCount.getCardCount(processedLine, false)?.let {
+                    cardCountSucceeded = true
+                    processedLine = it.first.trim()
+                    count = it.second
+                }
 
-                // Check and correct common errors
+                // Check after fixing basic corrections
                 processedLine = checkForCorrections(deck, processedLine, false)
+                if (addIfExactMatch(deck, processedLine, count, false)) {
+                    continue
+                }
 
-                // Find is starting card
-                val startingCardResult = getIsStartingCard(processedLine)
-                processedLine = startingCardResult.first.trim()
-                val isStarting = startingCardResult.second
-
+                // Check after processing the card names and removing spaces
                 processedLine = getProcessedCardName(processedLine, true).trim()
+                if (addIfExactMatch(deck, processedLine, count, false)) {
+                    continue
+                }
 
-                // Check and correct common errors again without spaces
+                // Check and correct common errors again with spaces removed
+                processedLine = checkForCorrections(deck, processedLine, false)
+                if (addIfExactMatch(deck, processedLine, count, false)) {
+                    continue
+                }
+
+                // Check if this line has two cards next to each other
+                if (checkForTwoCards(deck, processedLine, false, verbose)) {
+                    continue
+                }
+
+                // still nothing, we will try again but with wildcard corrections
                 processedLine = checkForCorrections(deck, processedLine, true)
-
-                // Now check again with the processed card name for an exact match
-                if (addIfExactMatch(deck, processedLine, count, isStarting)) {
+                if (addIfExactMatch(deck, processedLine, count, false)) {
                     continue
                 }
 
-                // Still no match?  Check if this line has two cards next to each other
-                if (checkForTwoCards(deck, processedLine, isStarting, verbose)) {
-                    continue
-                }
+                // Find card count with more relaxed extra searches, if the first search failed
+                if (!cardCountSucceeded) {
+                    cardCount.getCardCount(processedLine, true)?.let {
+                        cardCountSucceeded = true
+                        processedLine = it.first.trim()
+                        count = it.second
+                    }
 
-                if (count == 1) {
-                    // try finding count again, with extra searches
-                    cardCountResult = getCardCount(processedLine, true)
-                    processedLine = cardCountResult.first.trim()
-                    count = cardCountResult.second
-                }
+                    if (cardCountSucceeded) {
+                        if (addIfExactMatch(deck, processedLine, count, false)) {
+                            continue
+                        }
 
-                // Now check again with the processed card name for an exact match
-                if (addIfExactMatch(deck, processedLine, count, isStarting)) {
-                    continue
+                        processedLine = checkForCorrections(deck, processedLine, false)
+                        if (addIfExactMatch(deck, processedLine, count, false)) {
+                            continue
+                        }
+
+                        processedLine = checkForCorrections(deck, processedLine, true)
+                        if (addIfExactMatch(deck, processedLine, count, false)) {
+                            continue
+                        }
+                    }
                 }
 
                 unmatchedLines.add(processedLine)
@@ -400,7 +435,7 @@ class DeckParse(
 
             card.front.title?.let { title ->
                 val processedTitle = getProcessedCardName(title, true)
-                if (card.side?.toLowerCase() == "dark") {
+                if (card.side?.lowercase() == "dark") {
                     processedDarkCardNames[processedTitle] = card
                 } else {
                     processedLightCardNames[processedTitle] = card
@@ -411,133 +446,23 @@ class DeckParse(
         this.processedDarkCards = processedDarkCardNames
         this.processedLightCards = processedLightCardNames
     }
-}
 
-
-// Gets starting, and removes starting from string.
-fun getIsStartingCard(cardName: String): Pair<String, Boolean> {
-    return Pair(cardName, false)
-}
-
-// Gets card count, and removes card count from string.
-fun getCardCount(startingCardLine: String, extraSearches: Boolean): Pair<String, Int> {
-    var count = 1
-    var cardLine = startingCardLine
-
-    val numXStartRegex = Regex("^\\d+ *x")
-    val xNumStartRegex = Regex("^x *\\d+ ")
-    val xNumEndRegexNoSpace = Regex("\\Sx *\\d+")
-    val xNumEndRegexWithSpace = Regex("\\S x *\\d+")
-    val xNumParenEndRegex = Regex("\\b *\\(\\d+")
-    val startingNumRegex = Regex("^\\d+ *\\b")
-    val endingNumRegex = Regex("\\B\\D *\\d$")
-
-    val debug = false
-    if (debug) {
-        println("cardline: $cardLine")
-    }
-
-    // See if the line starts with #x
-    numXStartRegex.find(cardLine)?.let { matchResult ->
-        count = cardLine.substring(matchResult.range.start, matchResult.range.endInclusive).trim().toInt()
-        cardLine = cardLine.removeRange(matchResult.range)
-
-        if (debug) {
-            println("count(1): $count")
-            println("cardline: $cardLine")
-        }
-
-        return Pair(cardLine, count)
-    }
-
-    // See if the line starts with #x
-    xNumStartRegex.find(cardLine)?.let { matchResult ->
-        count = cardLine.substring(matchResult.range.start + 1, matchResult.range.endInclusive).trim().toInt()
-        cardLine = cardLine.removeRange(matchResult.range)
-
-        if (debug) {
-            println("count(7): $count")
-            println("cardline: $cardLine")
-        }
-
-        return Pair(cardLine, count)
-    }
-
-    // See if the line ends with " x#"
-    xNumEndRegexWithSpace.find(cardLine)?.let { matchResult ->
-        count = cardLine.substring(matchResult.range).trim().substring(3).trim().toInt()
-        cardLine = cardLine.substring(0, matchResult.range.first + 1)
-
-        if (debug) {
-            println("count(2): $count")
-            println("cardline: $cardLine")
-        }
-
-        return Pair(cardLine, count)
-    }
-
-    // See if the line ends with "x#"
-    xNumEndRegexNoSpace.find(cardLine)?.let { matchResult ->
-        count = cardLine.substring(matchResult.range).trim().substring(2).trim().toInt()
-        cardLine = cardLine.substring(0, matchResult.range.first)
-
-        if (debug) {
-            println("count(3): $count")
-            println("cardline: $cardLine")
-        }
-
-        return Pair(cardLine, count)
-    }
-
-    // See if the line ends with " (x"
-    xNumParenEndRegex.find(cardLine)?.let { matchResult ->
-        count = cardLine.substring(matchResult.range).trim().substring(1).trim().toInt()
-        cardLine = cardLine.substring(0, matchResult.range.first)
-
-        if (debug) {
-            println("count(4): $count")
-            println("cardline: $cardLine")
-        }
-
-        return Pair(cardLine, count)
-    }
-
-    // See if the line starts with #_CardName
-    startingNumRegex.find(cardLine)?.let { matchResult ->
-        count = cardLine.substring(matchResult.range).trim().toInt()
-        cardLine = cardLine.removeRange(matchResult.range)
-
-        if (debug) {
-            println("count(5): $count")
-            println("cardline: $cardLine")
-        }
-
-        return Pair(cardLine, count)
-    }
-
-    if (extraSearches) {
-        // See if the line ends with CardName_#
-        endingNumRegex.find(cardLine)?.let { matchResult ->
-            count = cardLine.substring(matchResult.range).trim().substring(1).toInt()
-            cardLine = cardLine.substring(0, matchResult.range.start + 1)
-
-            if (debug) {
-                println("count(6): $count")
-                println("cardline: $cardLine")
+    fun shouldIgnoreLine(line: String): Boolean {
+        for (filter in ignoreFilters) {
+            if (line.contains(filter, true)) {
+                return true
             }
-
-            return Pair(cardLine, count)
         }
-    }
 
-    return Pair(cardLine, count)
+        return false
+    }
 }
 
 fun getProcessedCardName(
     cardName: String,
     shouldRemoveSpacesAndParens: Boolean,
 ): String {
-    var processedTitle = cardName.toLowerCase()
+    var processedTitle = cardName.lowercase()
 
     val stringsToRemove = mutableListOf<String>()
     stringsToRemove.add("'")
@@ -617,7 +542,6 @@ private fun printDeckCountSummaries(decks: List<SWCCGDeck>, numPerLine: Int) {
         println(line)
     }
 }
-
 
 private fun printDeckPercentSummaries(decks: List<SWCCGDeck>, numPerLine: Int) {
     val percentFormatter = DecimalFormat("##%")

@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.jetbrains.kotlin.jvm' version '1.4.10'
+    id 'org.jetbrains.kotlin.jvm' version '2.1.20'
 }
 
 group 'org.example'
@@ -12,9 +12,11 @@ repositories {
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib"
-    implementation 'com.google.code.gson:gson:2.9.1'
+    implementation 'com.google.code.gson:gson:2.12.1'
+
+    testImplementation 'org.jetbrains.kotlin:kotlin-test'
 }
 
-test {
+tasks.named('test') {
     useJUnitPlatform()
 }

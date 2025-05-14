@@ -1,24 +1,10 @@
-NEED TO WRITE TEST(s) For THE COUNT PARSING FUNCTION.  MAKE SURE:
-
-3 X-Wing Laser Cannons
-3x X-Wing Laser Cannons
-3 x X-Wing Laser Cannons
-X-Wing Laser Cannons x3
-X-Wing Laser Cannons 3x
-X-Wing Laser Cannons - 3
-
-all work.
+* FIX all the TINY / LARGE deck warnings!
 
 
+* i think we need to get rid of all the wild cards altogether
+* when we return the failed line, we return the failure before fancy card count
+* highlight cards that have copies greater than 60?  30?
 
-handle "x1 tie fighter" card num format
-handle "x 1 tie fighter" card num format
-
-different formatting here:
-/home/scottrick/neptune/projects/decktech.net/_decks/2001/10/15/2001-10-15-19354.md
-/home/scottrick/neptune/projects/decktech.net/_decks/2002/12/10/2002-12-10-26555.md
-and here:
- /home/scottrick/neptune/projects/decktech.net/_decks/2000/04/25/2000-04-25-5966.md
 
 * parse all decks, putting non-matched cards into a giant hash table iwth a count
 * red-flag all the resulting strategy text and deck / author text.  drop description
