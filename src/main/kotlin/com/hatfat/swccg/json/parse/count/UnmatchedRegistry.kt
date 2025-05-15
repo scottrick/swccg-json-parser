@@ -1,15 +1,18 @@
 package com.hatfat.swccg.json.parse.count
 
-import com.hatfat.swccg.json.parse.getProcessedCardName
+import com.hatfat.swccg.json.parse.data.deck.SWCCGDeck
 import java.text.DecimalFormat
 
 class UnmatchedRegistry {
     val registry = HashMap<String, UnmatchedLine>()
 
-    fun registerUnmatchedLine(line: String, deck: String?) {
-        registry.getOrPut(line.lowercase()) {
-            UnmatchedLine(line.lowercase(), HashSet())
-        }.decks.add(deck ?: "[Unknown]")
+    fun registerUnmatchedLine(line: String, processedLine: String, deck: SWCCGDeck) {
+        registry.getOrPut(processedLine) {
+            UnmatchedLine(processedLine, HashSet(), HashSet())
+        }.also {
+            it.decks.add(deck)
+            it.lines.add(line)
+        }
     }
 
     fun printSummary(verbose: Boolean = false) {
@@ -20,7 +23,7 @@ class UnmatchedRegistry {
 
         if (verbose) {
             val countFormatter = DecimalFormat("000")
-            val printDecks = false
+            val printDecks = true
 
             val numToPrint = 15
             var currentNum = 0
@@ -31,10 +34,13 @@ class UnmatchedRegistry {
                 val countString = countFormatter.format(count)
 
                 // corrections["bosskinbus"] = "bosskinhoundstooth"
-                println("corrections[\"${getProcessedCardName(line.line, true)}\"] = \"TODO$countString\"")
+                println("corrections[\"${line.processedLine}\"] = \"TODO$countString\"")
 
                 if (printDecks) {
                     line.decks.take(2).forEach {
+                        println("  ${it.debugSource}")
+                    }
+                    line.lines.take(2).forEach {
                         println("  $it")
                     }
                 }

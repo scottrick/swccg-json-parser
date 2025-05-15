@@ -82,7 +82,7 @@ class DeckParse(
 
         println("---------------------------------------")
         println("Finished!  Parsed ${decks.size} decks.")
-        println("Total cards counted: ${decks.sumBy { it.cardCount() }}")
+        println("Total cards counted: ${decks.sumOf { it.cardCount() }}")
         println("---------------------------------------")
         if (verbose && !parseSingleDeck) {
             printDeckCountSummaries(decks, 40)
@@ -223,13 +223,14 @@ class DeckParse(
         val lines = rawLines.drop(2)
 
         for (line in lines) {
-            val processedLineWithSpaces = getProcessedCardName(line, false).trim()
+            val processedLineWithSpaces = getProcessedCardName(line, false, false).trim()
+            val processedLineNoSpaces = getProcessedCardName(line, true, false).trim()
 
             if (line.trim().isBlank() || line.trim().isEmpty() || line.trim() == "'" || line == "'") {
                 continue
             }
 
-            if (shouldIgnoreLine(line, processedLineWithSpaces)) {
+            if (shouldIgnoreLine(line, processedLineNoSpaces)) {
                 continue
             }
 
@@ -259,8 +260,8 @@ class DeckParse(
                     continue
                 }
 
-                // Check after processing the card names and removing spaces
-                processedLine = getProcessedCardName(processedLine, true).trim()
+                // Check after processing the card names and removing spaces and parens
+                processedLine = getProcessedCardName(processedLine, true, true).trim()
                 if (addIfExactMatch(deck, processedLine, count, false)) {
                     continue
                 }
@@ -307,7 +308,11 @@ class DeckParse(
                     }
                 }
 
-                unmatched.registerUnmatchedLine(line, deck.debugSource)
+                if (processedLine.isEmpty()) {
+                    continue
+                }
+
+                unmatched.registerUnmatchedLine(line, processedLine, deck)
                 if (verbose) {
                     println("NO MATCH: $processedLine")
                 }
@@ -441,7 +446,7 @@ class DeckParse(
             }
 
             card.front.title?.let { title ->
-                val processedTitle = getProcessedCardName(title, true)
+                val processedTitle = getProcessedCardName(title, true, true)
                 if (card.side?.lowercase() == "dark") {
                     processedDarkCardNames[processedTitle] = card
                 } else {
@@ -454,7 +459,7 @@ class DeckParse(
         this.processedLightCards = processedLightCardNames
     }
 
-    fun shouldIgnoreLine(line: String, processedLineWithSpaces: String): Boolean {
+    fun shouldIgnoreLine(line: String, processedLineNoSpaces: String): Boolean {
         for (filter in ignoreWildcardFilters) {
             if (line.contains(filter, true)) {
                 return true
@@ -462,13 +467,13 @@ class DeckParse(
         }
 
         for (filter in ignoreExactFilters) {
-            if (processedLineWithSpaces.equals(filter, true)) {
+            if (processedLineNoSpaces.equals(filter, true)) {
                 return true
             }
         }
 
         for (filter in ignoreStartsWithFilters) {
-            if (processedLineWithSpaces.startsWith(filter, true)) {
+            if (processedLineNoSpaces.startsWith(filter, true)) {
                 return true
             }
         }
@@ -479,7 +484,8 @@ class DeckParse(
 
 fun getProcessedCardName(
     cardName: String,
-    shouldRemoveSpacesAndParens: Boolean,
+    shouldRemoveSpaces: Boolean,
+    shouldRemoveParens: Boolean,
 ): String {
     var processedTitle = cardName.lowercase()
 
@@ -508,7 +514,7 @@ fun getProcessedCardName(
     stringsToRemove.add("[")
     stringsToRemove.add("]")
 
-    if (shouldRemoveSpacesAndParens) {
+    if (shouldRemoveSpaces) {
         stringsToRemove.add(" ")
     }
 
@@ -519,7 +525,7 @@ fun getProcessedCardName(
         }
     }
 
-    if (shouldRemoveSpacesAndParens) {
+    if (shouldRemoveParens) {
         // Remove anything after an opening parenthesis
         val parenIndex = processedTitle.indexOf("(")
         if (parenIndex >= 0) {
