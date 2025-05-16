@@ -79,6 +79,7 @@ class DeckParse(
         // 5269, (40 decks)
         // 5362, (40 decks), after refactoring card count functionality
         // 5135, after removing all wildcards
+        // 5449, (first 100 on windows machine). 207133 cards total found!
 
         println("---------------------------------------")
         println("Finished!  Parsed ${decks.size} decks.")
@@ -491,8 +492,9 @@ fun getProcessedCardName(
 
     val stringsToRemove = mutableListOf<String>()
     stringsToRemove.add("'")
-    stringsToRemove.add("`")
     stringsToRemove.add("’")
+    stringsToRemove.add("‘")
+    stringsToRemove.add("`")
     stringsToRemove.add(":")
     stringsToRemove.add(";")
     stringsToRemove.add("•")
@@ -513,6 +515,7 @@ fun getProcessedCardName(
     stringsToRemove.add("8217")
     stringsToRemove.add("[")
     stringsToRemove.add("]")
+    stringsToRemove.add("\u0092")
 
     if (shouldRemoveSpaces) {
         stringsToRemove.add(" ")

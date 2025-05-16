@@ -97,12 +97,12 @@ class CardCount {
             println("cardline: $cardLine")
         }
 
-        checkStartNum.checkCount(cardLine)?.let { return it }
         checkEndNum.checkCount(cardLine)?.let { return it }
+        checkStartNum.checkCount(cardLine)?.let { return it }
 
         if (extraSearches) {
-            checkStartNumNoSpace.checkCount(cardLine)?.let { return it }
             checkEndNumNoSpace.checkCount(cardLine)?.let { return it }
+            checkStartNumNoSpace.checkCount(cardLine)?.let { return it }
         }
 
         return null

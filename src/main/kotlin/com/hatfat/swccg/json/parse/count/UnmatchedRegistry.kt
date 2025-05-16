@@ -1,10 +1,12 @@
 package com.hatfat.swccg.json.parse.count
 
 import com.hatfat.swccg.json.parse.data.deck.SWCCGDeck
+import com.hatfat.swccg.json.parse.data.deck.createIgnoreUnmatchedWildcards
 import java.text.DecimalFormat
 
 class UnmatchedRegistry {
     val registry = HashMap<String, UnmatchedLine>()
+    val ignoreWildcards = createIgnoreUnmatchedWildcards()
 
     fun registerUnmatchedLine(line: String, processedLine: String, deck: SWCCGDeck) {
         registry.getOrPut(processedLine) {
@@ -15,6 +17,19 @@ class UnmatchedRegistry {
         }
     }
 
+    fun shouldSkipInSummary(line: String, verbose: Boolean = false) : Boolean {
+        for (filter in ignoreWildcards) {
+            if (line.contains(filter, true)) {
+                if (verbose) {
+                    println("skipping: $line")
+                }
+                return true
+            }
+        }
+
+        return false
+    }
+
     fun printSummary(verbose: Boolean = false) {
         println("---------------------------------------")
         println("UnmatchedRegistry Summary")
@@ -23,13 +38,20 @@ class UnmatchedRegistry {
 
         if (verbose) {
             val countFormatter = DecimalFormat("000")
-            val printDecks = true
+            val printDecks = false
 
-            val numToPrint = 15
+            val numToPrint = 20
+            val printDeckSize = 20
             var currentNum = 0
+            var skipped = 0
             val list = registry.values.sortedByDescending { it.decks.size }
 
             for (line in list) {
+                if (shouldSkipInSummary(line.processedLine, printDecks)) {
+                    skipped++
+                    continue
+                }
+
                 val count = line.decks.size
                 val countString = countFormatter.format(count)
 
@@ -37,10 +59,10 @@ class UnmatchedRegistry {
                 println("corrections[\"${line.processedLine}\"] = \"TODO$countString\"")
 
                 if (printDecks) {
-                    line.decks.take(2).forEach {
+                    line.decks.take(printDeckSize).forEach {
                         println("  ${it.debugSource}")
                     }
-                    line.lines.take(2).forEach {
+                    line.lines.take(printDeckSize).forEach {
                         println("  $it")
                     }
                 }
@@ -49,6 +71,30 @@ class UnmatchedRegistry {
 
                 if (currentNum > numToPrint) {
                     break
+                }
+            }
+
+            println("---------------------------------------")
+            println("Skipped: $skipped")
+            println("---------------------------------------")
+
+            val extraSummary = false
+            if (extraSummary) {
+                val countLeftMap = HashMap<Int, Int>()
+                for (line in list) {
+                    val numDecks = line.decks.size
+
+                    if (numDecks > 14) {
+                        println("bigger than 14: ${line.processedLine}")
+                    }
+
+                    val count = countLeftMap.getOrDefault(numDecks, 0)
+                    countLeftMap[numDecks] = count + 1
+                }
+
+                println("Counts Left")
+                for (key in countLeftMap.keys.sorted()) {
+                    println("[$key]=${countLeftMap[key]}")
                 }
             }
         }
