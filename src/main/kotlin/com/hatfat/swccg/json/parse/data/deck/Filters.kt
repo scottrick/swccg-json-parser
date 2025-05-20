@@ -12,6 +12,7 @@ fun createIgnoreWildcardFilters(): List<String> {
     filters.add("indicator")
     filters.add("alien")
     filters.add("charecters")
+    filters.add("charectors")
     filters.add("starters")
 
     return filters
@@ -94,6 +95,8 @@ fun createIgnoreStartsWithFilters(): List<String> {
     filters.add("place")
     filters.add("combatvehicle")
     filters.add("senators")
+    filters.add("stships")
+    filters.add("ship")
 
     return filters
 }
@@ -126,7 +129,8 @@ fun createIgnoreUnmatchedWildcards(): List<String> {
     filters.add("obj")
     filters.add("orders")
     filters.add("cards")
-    filters.add("cards")
+    filters.add("politicaleffects")
+    filters.add("admiralorder")
 
     return filters
 }

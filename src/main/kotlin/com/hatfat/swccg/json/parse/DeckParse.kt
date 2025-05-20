@@ -447,11 +447,32 @@ class DeckParse(
             }
 
             card.front.title?.let { title ->
-                val processedTitle = getProcessedCardName(title, true, true)
-                if (card.side?.lowercase() == "dark") {
-                    processedDarkCardNames[processedTitle] = card
-                } else {
-                    processedLightCardNames[processedTitle] = card
+                if (title.contains("(AI)")) {
+                    // Skipping AI copy
+                }
+                else {
+                    val processedTitle = getProcessedCardName(title, true, true)
+                    if (card.side?.lowercase() == "dark") {
+                        // TODO handle the rest of the duplicate name cards here...
+                        // Tatooine, Bib Fortuna, Defensive Shields, etc
+                        if (card.id== 286 && card.set != "5") {
+                            // Found Special Edition Boba Fett
+                            processedDarkCardNames["${processedTitle}se"] = card
+                        }
+                        else {
+//                            if (processedDarkCardNames.contains(processedTitle)) {
+//                                println(">> DARK  CARD NAMES duplicate: $processedTitle, set: ${card.set}, cardId: ${card.id}")
+//                            }
+
+                            processedDarkCardNames[processedTitle] = card
+                        }
+                    } else {
+//                        if (processedLightCardNames.contains(processedTitle)) {
+//                            println(">> LIGHT CARD NAMES duplicate: $processedTitle, set: ${card.set}, cardId: ${card.id}")
+//                        }
+
+                        processedLightCardNames[processedTitle] = card
+                    }
                 }
             }
         }
@@ -495,6 +516,7 @@ fun getProcessedCardName(
     stringsToRemove.add("’")
     stringsToRemove.add("‘")
     stringsToRemove.add("`")
+    stringsToRemove.add("\"")
     stringsToRemove.add(":")
     stringsToRemove.add(";")
     stringsToRemove.add("•")

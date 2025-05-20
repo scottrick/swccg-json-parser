@@ -148,6 +148,7 @@ fun createDarkGeneralCorrections(): Map<String, String> {
     corrections["controll"] = "control"
     corrections["setforfun"] = "setforstun"
     corrections["beaton"] = "beaten"
+    corrections["tempist"] = "tempest"
 
     return corrections
 }
