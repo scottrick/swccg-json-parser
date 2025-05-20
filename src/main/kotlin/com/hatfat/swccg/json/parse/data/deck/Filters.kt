@@ -4,11 +4,13 @@ fun createIgnoreWildcardFilters(): List<String> {
     val filters = mutableListOf<String>()
 
     filters.add(".deck -")
+    filters.add("interrrupts")
     filters.add("inturrupts")
     filters.add("interuppts")
     filters.add("whepons")
     filters.add("charachters")
     filters.add("charactors")
+    filters.add("charcters")
     filters.add("indicator")
     filters.add("alien")
     filters.add("charecters")
@@ -39,6 +41,7 @@ fun createIgnoreStartsWithFilters(): List<String> {
     filters.add("device")
     filters.add("creature")
     filters.add("vehicles")
+    filters.add("vechicles")
     filters.add("vehicle(")
     filters.add("ships")
     filters.add("unknown")
@@ -97,6 +100,9 @@ fun createIgnoreStartsWithFilters(): List<String> {
     filters.add("senators")
     filters.add("stships")
     filters.add("ship")
+    filters.add("red")
+    filters.add("blue")
+    filters.add("orders")
 
     return filters
 }
@@ -108,13 +114,12 @@ fun createIgnoreExactFilters(): List<String> {
     filters.add("blue")
     filters.add("red")
     filters.add("green")
-    filters.add("gray")
-    filters.add("grey")
     filters.add("effect")
     filters.add("obj")
     filters.add("weapons")
     filters.add("location")
     filters.add("podracer")
+    filters.add("marker")
 
     return filters
 }
@@ -122,15 +127,18 @@ fun createIgnoreExactFilters(): List<String> {
 fun createIgnoreUnmatchedWildcards(): List<String> {
     val filters = mutableListOf<String>()
 
-    filters.add("red")
-    filters.add("blue")
     filters.add("weapon")
-    filters.add("green")
     filters.add("obj")
-    filters.add("orders")
     filters.add("cards")
+    filters.add("green")
     filters.add("politicaleffects")
     filters.add("admiralorder")
+    filters.add("lostinterrupts")
+    filters.add("usedinterrupts")
+    filters.add("additionallocations")
+    filters.add("fx")
+    filters.add("bigblue")
+    filters.add("to1")
 
     return filters
 }

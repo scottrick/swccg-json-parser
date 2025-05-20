@@ -17,7 +17,7 @@ class UnmatchedRegistry {
         }
     }
 
-    fun shouldSkipInSummary(line: String, verbose: Boolean = false) : Boolean {
+    fun shouldSkipInSummary(line: String, verbose: Boolean = false): Boolean {
         for (filter in ignoreWildcards) {
             if (line.contains(filter, true)) {
                 if (verbose) {

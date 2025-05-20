@@ -28,11 +28,11 @@ fun main(args: Array<String>) {
 }
 
 fun getAllCards(gson: Gson, onlyDecipher: Boolean): List<SWCCGCard> {
-    val lightCurrentInputStream = FileInputStream(File("output/Light.json"))
+    val lightCurrentInputStream = FileInputStream(File("../swccg-card-json/Light.json"))
     val lightCurrentReader = BufferedReader(InputStreamReader(lightCurrentInputStream))
     val light = gson.fromJson(lightCurrentReader, SWCCGCardList::class.java)
 
-    val darkCurrentInputStream = FileInputStream(File("output/Dark.json"))
+    val darkCurrentInputStream = FileInputStream(File("../swccg-card-json/Dark.json"))
     val darkCurrentReader = BufferedReader(InputStreamReader(darkCurrentInputStream))
     val dark = gson.fromJson(darkCurrentReader, SWCCGCardList::class.java)
 

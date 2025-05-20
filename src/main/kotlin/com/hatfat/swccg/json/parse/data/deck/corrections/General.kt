@@ -6,6 +6,9 @@ package com.hatfat.swccg.json.parse.data.deck.corrections
         * Common typos
  */
 fun insertSharedGeneralCorrections(corrections: MutableMap<String, String>) {
+    corrections["grey"] = "gray"
+    corrections["wepon"] = "weapon"
+    corrections["manuever"] = "maneuver"
     corrections["97"] = "94"
     corrections["92"] = "94"
     corrections["54"] = "94"
