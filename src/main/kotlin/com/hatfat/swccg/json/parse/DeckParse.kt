@@ -46,9 +46,9 @@ class DeckParse(
         println("${allCards.size} cards loaded")
 
         var currentDeckNum = 0
-        val deckToParse = 39
+        val deckToParse = 741
         val parseSingleDeck = false
-        val verbose = false
+        val verbose = true
         val validate = false
 
         val decks = mutableListOf<SWCCGDeck>()
@@ -435,13 +435,7 @@ class DeckParse(
 
         for (card in cards) {
             // Ignore virtual cards for now
-            var set = 0
-            set = if (card.set?.contains("d") == true) {
-                // Virtual Defensive Shields
-                200
-            } else {
-                card.set?.toInt() ?: 0
-            }
+            val set = card.getSetInt()
             if (set >= 200) {
                 continue
             }
@@ -451,25 +445,16 @@ class DeckParse(
                     // Skipping AI copy
                 } else {
                     val processedTitle = getProcessedCardName(title, true, true)
+
                     if (card.side?.lowercase() == "dark") {
-                        // TODO handle the rest of the duplicate name cards here...
-                        // Tatooine, Bib Fortuna, Defensive Shields, etc
                         if (card.id == 286 && card.set != "5") {
                             // Found Special Edition Boba Fett
                             processedDarkCardNames["${processedTitle}se"] = card
                         } else {
-//                            if (processedDarkCardNames.contains(processedTitle)) {
-//                                println(">> DARK  CARD NAMES duplicate: $processedTitle, set: ${card.set}, cardId: ${card.id}")
-//                            }
-
-                            processedDarkCardNames[processedTitle] = card
+                            handleDuplicateCardTitle(card, processedTitle, processedDarkCardNames)
                         }
                     } else {
-//                        if (processedLightCardNames.contains(processedTitle)) {
-//                            println(">> LIGHT CARD NAMES duplicate: $processedTitle, set: ${card.set}, cardId: ${card.id}")
-//                        }
-
-                        processedLightCardNames[processedTitle] = card
+                        handleDuplicateCardTitle(card, processedTitle, processedLightCardNames)
                     }
                 }
             }
@@ -477,6 +462,22 @@ class DeckParse(
 
         this.processedDarkCards = processedDarkCardNames
         this.processedLightCards = processedLightCardNames
+    }
+
+    fun handleDuplicateCardTitle(card: SWCCGCard, title: String, cardNames: HashMap<String, SWCCGCard>) {
+        val existing = cardNames[title]
+
+        if (existing != null) {
+            if (existing.getSetInt() > card.getSetInt()) {
+                // Use the new card, since its from an earlier set.
+                cardNames[title] = card
+            } else {
+                // Keep the existing card, since its from an earlier set.
+            }
+        } else {
+            // not a duplicate, just add it
+            cardNames[title] = card
+        }
     }
 
     fun shouldIgnoreLine(line: String, processedLineNoSpaces: String): Boolean {
@@ -591,7 +592,7 @@ private fun printDeckCountSummaries(decks: List<SWCCGDeck>, numPerLine: Int) {
             }
         }
 
-        println(line)
+//        println(line)
     }
 }
 

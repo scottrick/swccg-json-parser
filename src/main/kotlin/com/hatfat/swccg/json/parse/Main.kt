@@ -5,9 +5,14 @@ import com.google.gson.GsonBuilder
 import com.hatfat.swccg.json.parse.data.SWCCGCard
 import com.hatfat.swccg.json.parse.data.SWCCGCardList
 import java.io.BufferedReader
+import java.io.BufferedWriter
 import java.io.File
 import java.io.FileInputStream
+import java.io.FileOutputStream
 import java.io.InputStreamReader
+import java.io.OutputStreamWriter
+import kotlin.text.contains
+import kotlin.text.toInt
 
 @Suppress("UNUSED_PARAMETER")
 fun main(args: Array<String>) {
@@ -40,6 +45,9 @@ fun getAllCards(gson: Gson, onlyDecipher: Boolean): List<SWCCGCard> {
     cards.addAll(light.cards)
     cards.addAll(dark.cards)
 
+//    dumpSimpleJson(gson, light.cards, "output/lightSimple.json")
+//    dumpSimpleJson(gson, dark.cards, "output/darkSimple.json")
+
     if (!onlyDecipher) {
         val lightLegacyInputStream = FileInputStream(File("output/LightLegacy.json"))
         val lightLegacyReader = BufferedReader(InputStreamReader(lightLegacyInputStream))
@@ -56,3 +64,21 @@ fun getAllCards(gson: Gson, onlyDecipher: Boolean): List<SWCCGCard> {
     return cards
 }
 
+fun dumpSimpleJson(gson: Gson, cards: List<SWCCGCard>, fileName: String) {
+    val noVirtualCards = cards.filter {
+        it.getSetInt() < 200
+    }
+
+    // convert to simple card format
+    val simpleCards = noVirtualCards.map { it.toSimpleCard() }
+
+    // write to disk
+    val outputFile = File(fileName)
+    outputFile.parentFile.mkdirs()
+    outputFile.createNewFile()
+    val outputStream = FileOutputStream(outputFile)
+    val writer = BufferedWriter(OutputStreamWriter(outputStream))
+    gson.toJson(simpleCards, writer)
+    writer.close()
+    outputStream.close()
+}

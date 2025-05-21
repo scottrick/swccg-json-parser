@@ -18,19 +18,19 @@ data class SWCCGDeck(
     }
 
     fun addDeckEntry(entry: SWCCGDeckEntry) {
-        cards.find { it.cardId == entry.cardId }?.let {
-            if (it.count == entry.count) {
-                // entry was already in the list, so ignore the duplicate!
+//        cards.find { it.cardId == entry.cardId }?.let {
+//            if (it.count == entry.count) {
+//                // entry was already in the list, so update the entry with the extra count
 //                println("entry: $entry already found!!!")
-                return
-            }
-        }
+//                return
+//            }
+//        }
 
         cards.add(entry)
     }
 
     fun cardCount(): Int {
-        return cards.map { it.count }.sum()
+        return cards.sumOf { it.count }
     }
 
     fun print(extraInfo: Boolean) {

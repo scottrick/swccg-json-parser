@@ -1,6 +1,8 @@
 package com.hatfat.swccg.json.parse.data
 
 import java.io.Serializable
+import kotlin.text.contains
+import kotlin.text.toInt
 
 data class SWCCGCard(
     var abbr: List<String>?,
@@ -31,5 +33,25 @@ data class SWCCGCard(
 
     override fun compareTo(other: SWCCGCard): Int {
         return front.compareTo(other.front)
+    }
+
+    fun getSetInt() : Int {
+        var set = 0
+        set = if (this.set?.contains("d") == true) {
+            // Virtual Defensive Shields
+            200
+        } else {
+            this.set?.toInt() ?: 0
+        }
+
+        return set
+    }
+
+    fun toSimpleCard(): SWCCGSimpleCard {
+        return SWCCGSimpleCard(
+            this.abbr,
+            this.front.title,
+            this.counterpart,
+        )
     }
 }

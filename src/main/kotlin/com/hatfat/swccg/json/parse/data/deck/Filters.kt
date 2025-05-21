@@ -11,11 +11,13 @@ fun createIgnoreWildcardFilters(): List<String> {
     filters.add("charachters")
     filters.add("charactors")
     filters.add("charcters")
+    filters.add("charaters")
     filters.add("indicator")
     filters.add("alien")
     filters.add("charecters")
     filters.add("charectors")
     filters.add("starters")
+    filters.add("starhips")
 
     return filters
 }
@@ -100,8 +102,6 @@ fun createIgnoreStartsWithFilters(): List<String> {
     filters.add("senators")
     filters.add("stships")
     filters.add("ship")
-    filters.add("red")
-    filters.add("blue")
     filters.add("orders")
 
     return filters
@@ -116,10 +116,20 @@ fun createIgnoreExactFilters(): List<String> {
     filters.add("green")
     filters.add("effect")
     filters.add("obj")
+    filters.add("epic")
     filters.add("weapons")
     filters.add("location")
     filters.add("podracer")
     filters.add("marker")
+    filters.add("rebels")
+    filters.add("stardestroyers")
+    filters.add("thetoys")
+    filters.add("thehelpers")
+    filters.add("theorder")
+    filters.add("thestuff")
+    filters.add("thecast")
+    filters.add("theset")
+    filters.add("thefireworks")
 
     return filters
 }

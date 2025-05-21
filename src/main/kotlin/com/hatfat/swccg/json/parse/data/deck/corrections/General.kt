@@ -152,6 +152,10 @@ fun createDarkGeneralCorrections(): Map<String, String> {
     corrections["setforfun"] = "setforstun"
     corrections["beaton"] = "beaten"
     corrections["tempist"] = "tempest"
+    corrections["tempscout"] = "tempestscout"
+    corrections["landingplatform327"] = "eastplatform"
+    corrections["ds62"] = "ds61"
+    corrections["ds16"] = "ds61"
 
     return corrections
 }
