@@ -130,6 +130,9 @@ fun createIgnoreExactFilters(): List<String> {
     filters.add("thecast")
     filters.add("theset")
     filters.add("thefireworks")
+    filters.add("sectors")
+    filters.add("podracer")
+    filters.add("weapons")
 
     return filters
 }
@@ -137,7 +140,6 @@ fun createIgnoreExactFilters(): List<String> {
 fun createIgnoreUnmatchedWildcards(): List<String> {
     val filters = mutableListOf<String>()
 
-    filters.add("weapon")
     filters.add("obj")
     filters.add("cards")
     filters.add("green")

@@ -1,3 +1,13 @@
+903] LARGE DECK: /home/scottrick/neptune/projects/decktech.net/_decks/2001/06/01/2001-06-01-16349.md
+1048] LARGE DECK: /home/scottrick/neptune/projects/decktech.net/_decks/2001/04/24/2001-04-24-15564.md
+1207] LARGE DECK: /home/scottrick/neptune/projects/decktech.net/_decks/2001/04/30/2001-04-30-15661.md
+2226] LARGE DECK: /home/scottrick/neptune/projects/decktech.net/_decks/2000/07/25/2000-07-25-8721.md
+2237] LARGE DECK: /home/scottrick/neptune/projects/decktech.net/_decks/2000/10/15/2000-10-15-11151.md
+2480] LARGE DECK: /home/scottrick/neptune/projects/decktech.net/_decks/2000/08/29/2000-08-29-9984.md
+2616] LARGE DECK: /home/scottrick/neptune/projects/decktech.net/_decks/2000/06/24/2000-06-24-7914.md
+2689] LARGE DECK: /home/scottrick/neptune/projects/decktech.net/_decks/2000/06/30/2000-06-30-8042.md
+3269] LARGE DECK: /home/scottrick/neptune/projects/decktech.net/_decks/2000/09/06/2000-09-06-10241.md
+
 * i think we need to get rid of all the wild cards altogether
 * when we return the failed line, we return the failure before fancy card count
 * highlight cards that have copies greater than 60?  30?

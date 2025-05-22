@@ -6,6 +6,10 @@ package com.hatfat.swccg.json.parse.data.deck.corrections
     This should be the most common and safest way to make corrections.
  */
 fun insertSharedExactCorrections(corrections: MutableMap<String, String>) {
+    corrections["dsiicoolantshaft"] = "deathstariicoolantshaft"
+    corrections["endoroperationsidontcare"] = "endoroperationsimperialoutpost"
+    corrections["dsiicapacitors"] = "deathstariicapacitors"
+    corrections["dsiicentralcore"] = "deathstariireactorcore"
     corrections["greeta"] = "greeata"
     corrections["bithshuffledr"] = "thebithshuffledesperatereach"
     corrections["elephantman"] = "ephantmon"
@@ -1136,6 +1140,10 @@ fun createDarkExactCorrections(): Map<String, String> {
     corrections["setyourcourseforalderaanultimatepowerintheuniverse"] =
         "setyourcourseforalderaantheultimatepowerintheuniverse"
     corrections["commandermerejek"] = "commandermerrejk"
+    corrections["headingforthemedicalfrigate"] = "prepareddefenses"
+    corrections["allpowertotheweapons"] = "allpowertoweapons"
+    corrections["sfs72"] = "sfsls72tiecannon"
+    corrections["sfs93"] = "sfsls93lasercannons"
 
     return corrections
 }
