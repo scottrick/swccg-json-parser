@@ -1,12 +1,14 @@
 package com.hatfat.swccg.json.parse.count
 
 import com.hatfat.swccg.json.parse.data.deck.SWCCGDeck
+import com.hatfat.swccg.json.parse.data.deck.createIgnoreExactFilters
 import com.hatfat.swccg.json.parse.data.deck.createIgnoreUnmatchedWildcards
 import java.text.DecimalFormat
 
 class UnmatchedRegistry {
     val registry = HashMap<String, UnmatchedLine>()
     val ignoreWildcards = createIgnoreUnmatchedWildcards()
+    val ignoreExact = createIgnoreExactFilters()
 
     fun registerUnmatchedLine(line: String, processedLine: String, deck: SWCCGDeck) {
         registry.getOrPut(processedLine) {
@@ -26,6 +28,14 @@ class UnmatchedRegistry {
                 return true
             }
         }
+        for (filter in ignoreExact) {
+            if (line.contains(filter, true)) {
+                if (verbose) {
+                    println("skipping: $line")
+                }
+                return true
+            }
+        }
 
         return false
     }
@@ -38,7 +48,7 @@ class UnmatchedRegistry {
 
         if (verbose) {
             val countFormatter = DecimalFormat("000")
-            val printDecks = false
+            val printDecks = true
 
             val numToPrint = 20
             val printDeckSize = 20

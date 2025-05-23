@@ -46,8 +46,8 @@ class DeckParse(
         println("${allCards.size} cards loaded")
 
         var currentDeckNum = 0
-        val deckToParse = 837
-        val parseSingleDeck = true
+        val deckToParse = 3269
+        val parseSingleDeck = false
         val verbose = true
         val validate = false
 

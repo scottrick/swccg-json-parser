@@ -34,7 +34,6 @@ fun createIgnoreStartsWithFilters(): List<String> {
     filters.add("starship(")
     filters.add("starting")
     filters.add("character")
-    filters.add("objective")
     filters.add("people")
     filters.add("admiralso")
     filters.add("weapons(")
@@ -133,6 +132,9 @@ fun createIgnoreExactFilters(): List<String> {
     filters.add("sectors")
     filters.add("podracer")
     filters.add("weapons")
+    filters.add("weapon")
+    filters.add("objective")
+    filters.add("objectives")
 
     return filters
 }
@@ -140,7 +142,6 @@ fun createIgnoreExactFilters(): List<String> {
 fun createIgnoreUnmatchedWildcards(): List<String> {
     val filters = mutableListOf<String>()
 
-    filters.add("obj")
     filters.add("cards")
     filters.add("green")
     filters.add("politicaleffects")

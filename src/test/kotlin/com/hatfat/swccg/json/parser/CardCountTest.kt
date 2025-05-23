@@ -205,6 +205,11 @@ class CardCountTest {
         testInput("ds-61-4 1x", Pair("ds-61-4", 1))
     }
 
+    @Test
+    fun case40() {
+        testInput("stone pile(2)", Pair("stone pile", 2), true)
+    }
+
 //    testInput("Myo x3 (Rep)", Pair("Myo", 3))
 
     fun testInput(input: String, expected: Pair<String, Int>?, extraSearches: Boolean = false) {
